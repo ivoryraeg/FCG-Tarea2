@@ -41,6 +41,7 @@ GLuint programID2;
 GLuint uvbuffer;
 GLuint Texture;
 
+
 class Triangle
 {
     // An array of 3 vectors which represents 3 vertices
