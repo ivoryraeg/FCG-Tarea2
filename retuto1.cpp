@@ -394,7 +394,7 @@ int main()
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
     glGenBuffers(2, vertexbuffer);
     // The following commands will talk about our 'vertexbuffer' buffer
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
+    //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
     // Give our vertices to OpenGL.
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
     glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);
