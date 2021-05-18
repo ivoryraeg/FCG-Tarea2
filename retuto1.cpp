@@ -97,6 +97,13 @@ static const GLfloat g_uv_buffer_data[] = {
     1.0f, 1.0f-1.0f
 };
 
+static const GLfloat g_uv_buffer_data1[] = {
+    0.0f, 1.0f-0.0f,
+    1.0f, 1.0f-0.0f,
+    1.0f, 1.0f-1.0f
+};
+
+
 
 /*GLuint loadTGA_glfw(const char * imagepath){
 
@@ -178,7 +185,7 @@ GLuint loadDDS(const char * imagepath){
     }
         // Create one OpenGL texture
     GLuint textureID;
-    glGenTextures(1, &textureID);
+    glGenTextures(0, &textureID);
 
     // "Bind" the newly created texture : all future texture functions will modify this texture
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -269,7 +276,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
         (void*)0                          // array buffer offset
     );
     // Draw the triangle !
-      
+
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
     glDisableVertexAttribArray(0);
 
@@ -335,6 +342,17 @@ void Scene2(double deltaTime, GLFWwindow *window)
 
     triangle1.PassToBuffer(g_vertex_buffer_data1);
     //triangle2.PassToBuffer(g_vertex_buffer_data2);
+
+    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS){//Textura 1
+        // cambia la textura
+        Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
+    }if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS){//Textura 2
+        // cambia la textura
+        Texture = loadDDS("prueba1.DDS");
+    }if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS){//Textura 3
+        // cambia la textura
+        Texture = loadDDS("test_textura_PNG_DXT1_3.DDS");
+    }
     
 }
 
@@ -387,12 +405,11 @@ int main()
     glUseProgram(programID);
 
     GLuint VertexArrayID[2];
-    glGenVertexArrays(2, VertexArrayID);
+    glGenVertexArrays(1, VertexArrayID);
     glBindVertexArray(VertexArrayID[0]);
-    glBindVertexArray(VertexArrayID[1]);
 
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
-    glGenBuffers(2, vertexbuffer);
+    glGenBuffers(3, vertexbuffer);
     // The following commands will talk about our 'vertexbuffer' buffer
     //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
     // Give our vertices to OpenGL.
@@ -405,8 +422,12 @@ int main()
 
     GLuint unit = 0;
     glActiveTexture(GL_TEXTURE0 + unit);
+
     Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
-    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+    Texture = loadDDS("prueba1.DDS");
+    Texture = loadDDS("test_textura_PNG_DXT1_2.DDS");
+
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);    
 
     glGenBuffers(1, &uvbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
