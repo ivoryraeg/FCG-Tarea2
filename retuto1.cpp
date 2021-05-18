@@ -388,13 +388,13 @@ int main()
 
     GLuint VertexArrayID[2];
     glGenVertexArrays(2, VertexArrayID);
-    //glBindVertexArray(VertexArrayID[0]);
-    //glBindVertexArray(VertexArrayID[1]);
+    glBindVertexArray(VertexArrayID[0]);
+    glBindVertexArray(VertexArrayID[1]);
 
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
     glGenBuffers(2, vertexbuffer);
     // The following commands will talk about our 'vertexbuffer' buffer
-    //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
     // Give our vertices to OpenGL.
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
     glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);
@@ -428,7 +428,7 @@ int main()
 
         deltaTime = std::chrono::duration<double>(t_end - t_start).count();
 
-        /*timeToShader -= deltaTime;
+        timeToShader -= deltaTime;
         if (timeToShader < 0)
         {
             timeToShader = 3;
@@ -438,7 +438,7 @@ int main()
 
             glDeleteProgram(programID);
             programID = newProgramID;
-        }*/
+        }
 
  
 
