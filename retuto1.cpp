@@ -99,6 +99,13 @@ static const GLfloat g_uv_buffer_data[] = {
     1.0f, 1.0f-1.0f
 };
 
+static const GLfloat g_uv_buffer_data1[] = {
+    0.0f, 1.0f-0.0f,
+    1.0f, 1.0f-0.0f,
+    1.0f, 1.0f-1.0f
+};
+
+
 
 /*GLuint loadTGA_glfw(const char * imagepath){
 
@@ -180,7 +187,7 @@ GLuint loadDDS(const char * imagepath){
     }
     // Create one OpenGL texture
     GLuint textureID;
-    glGenTextures(1, &textureID);
+    glGenTextures(0, &textureID);
 
     // "Bind" the newly created texture : all future texture functions will modify this texture
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -270,6 +277,9 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,                                // stride
         (void*)0                          // array buffer offset
     );
+    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS){
+        glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),0);
+    }
     if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS){
         glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),1);
     }  
@@ -278,7 +288,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
     }
     // Draw the triangle !
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
-    //glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(0);
 
     glUseProgram(programID2);
     glEnableVertexAttribArray(0);
@@ -302,6 +312,9 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,                                // stride
         (void*)0                          // array buffer offset
     );
+    if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS){
+        glUniform1i(glGetUniformLocation(programID2,"myTextureSampler"),0);
+    }
     if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS){
         glUniform1i(glGetUniformLocation(programID2,"myTextureSampler"),1);
     }  
@@ -313,10 +326,8 @@ void Scene2(double deltaTime, GLFWwindow *window)
 
     glDisableVertexAttribArray(0);
 
-
     // Don't forget to #include <glm/gtc/quaternion.hpp> and <glm/gtx/quaternion.hpp>
 
-    triangle1.Rotate(vec3(0,0,deltaTime));
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
         triangle1.Translate(vec3(-deltaTime,0,0));
     }
@@ -351,6 +362,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
             triangle1.scale += vec3(0,0,+deltaTime);
         }
     }
+    triangle1.Rotate(vec3(0,0,deltaTime));
     triangle2.Rotate(vec3(0,0,-deltaTime));
     triangle1.PassToBuffer(g_vertex_buffer_data1);
     triangle2.PassToBuffer(g_vertex_buffer_data2);
@@ -406,11 +418,11 @@ int main()
     glUseProgram(programID);
 
     GLuint VertexArrayID[2];
-    glGenVertexArrays(2, VertexArrayID);
+    glGenVertexArrays(3, VertexArrayID);
     glBindVertexArray(VertexArrayID[0]);
 
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
-    glGenBuffers(2, vertexbuffer);
+    glGenBuffers(3, vertexbuffer);
     // The following commands will talk about our 'vertexbuffer' buffer
     //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
     // Give our vertices to OpenGL.
@@ -421,24 +433,24 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);   
     glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
 
-    GLuint unit = 0;
-    glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
-    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
-
-    glGenBuffers(2, &uvbuffer);
+    glGenBuffers(3, &uvbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
-    unit++;
+    GLuint unit = 0;
     glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("uvtemplate.DDS");
-    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+    Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
+    //glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);    
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
     Texture = loadDDS("uvtemplate.DDS");
-    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+    //glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+    
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("uvtemplate.DDS");
+    //glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
 
     auto t_start = std::chrono::high_resolution_clock::now();
     // the work...
@@ -448,24 +460,11 @@ int main()
     triangle2.pos = vec3(0,0,-1.5);
     do
     {
-
         //getsTime Dif
         t_start = t_end;
         t_end = std::chrono::high_resolution_clock::now();
 
         deltaTime = std::chrono::duration<double>(t_end - t_start).count();
-
-        timeToShader -= deltaTime;
-        if (timeToShader < 0)
-        {
-            timeToShader = 3;
-            GLuint newProgramID = LoadShaders("MyVertex.shader", "MyFragment.shader");
-            // Use our shader
-            glUseProgram(newProgramID);
-
-            glDeleteProgram(programID);
-            programID = newProgramID;
-        }
 
         // Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
