@@ -41,12 +41,10 @@ GLuint programID2;
 GLuint uvbuffer;
 GLuint Texture;
 
-
 class Triangle
 {
     // An array of 3 vectors which represents 3 vertices
 public:
-    Triangle(){};
     glm::vec3 vertices[3] = {
         vec3(-1, -1, 0),
         vec3(1, -1, 0),
@@ -98,13 +96,6 @@ static const GLfloat g_uv_buffer_data[] = {
     1.0f, 1.0f-0.0f,
     1.0f, 1.0f-1.0f
 };
-
-static const GLfloat g_uv_buffer_data1[] = {
-    0.0f, 1.0f-0.0f,
-    1.0f, 1.0f-0.0f,
-    1.0f, 1.0f-1.0f
-};
-
 
 
 /*GLuint loadTGA_glfw(const char * imagepath){
@@ -185,9 +176,9 @@ GLuint loadDDS(const char * imagepath){
         printf("error 3\n");
         return 0;
     }
-    // Create one OpenGL texture
+        // Create one OpenGL texture
     GLuint textureID;
-    glGenTextures(0, &textureID);
+    glGenTextures(1, &textureID);
 
     // "Bind" the newly created texture : all future texture functions will modify this texture
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -263,7 +254,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,        // stride
         (void *)0 // array buffer offset
     );
-    
+
     // Bind our texture in Texture Unit 0
     //glActiveTexture(GL_TEXTURE0);
     //glBindTexture(GL_TEXTURE_2D, Texture);    
@@ -287,6 +278,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
         glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),2);
     }
     // Draw the triangle !
+      
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
     glDisableVertexAttribArray(0);
 
@@ -301,7 +293,6 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,        // stride
         (void *)0 // array buffer offset
     );
-
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glVertexAttribPointer(
@@ -321,13 +312,17 @@ void Scene2(double deltaTime, GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS){
         glUniform1i(glGetUniformLocation(programID2,"myTextureSampler"),2);
     }
-    // Draw the triangle ! 
+    // Draw the triangle !
+       
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
 
     glDisableVertexAttribArray(0);
 
+
+
     // Don't forget to #include <glm/gtc/quaternion.hpp> and <glm/gtx/quaternion.hpp>
 
+    triangle1.Rotate(vec3(0,0,deltaTime));
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
         triangle1.Translate(vec3(-deltaTime,0,0));
     }
@@ -362,8 +357,9 @@ void Scene2(double deltaTime, GLFWwindow *window)
             triangle1.scale += vec3(0,0,+deltaTime);
         }
     }
-    triangle1.Rotate(vec3(0,0,deltaTime));
-    triangle2.Rotate(vec3(0,0,-deltaTime));
+
+    triangle2.Rotate(vec3(0,deltaTime,-deltaTime));
+
     triangle1.PassToBuffer(g_vertex_buffer_data1);
     triangle2.PassToBuffer(g_vertex_buffer_data2);
     
@@ -418,39 +414,41 @@ int main()
     glUseProgram(programID);
 
     GLuint VertexArrayID[2];
-    glGenVertexArrays(3, VertexArrayID);
-    glBindVertexArray(VertexArrayID[0]);
+    glGenVertexArrays(2, VertexArrayID);
+    glBindVertexArray(VertexArrayID[0]);//*
+    glBindVertexArray(VertexArrayID[1]);//*
 
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
-    glGenBuffers(3, vertexbuffer);
+    glGenBuffers(2, vertexbuffer);
     // The following commands will talk about our 'vertexbuffer' buffer
     //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
     // Give our vertices to OpenGL.
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
     glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);
 
-    glBindVertexArray(VertexArrayID[1]);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);   
-    glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
 
-    glGenBuffers(3, &uvbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);    
+    glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
 
     GLuint unit = 0;
     glActiveTexture(GL_TEXTURE0 + unit);
     Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
-    //glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);    
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);    
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
     Texture = loadDDS("uvtemplate.DDS");
-    //glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
     Texture = loadDDS("uvtemplate.DDS");
-    //glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    glGenBuffers(1, &uvbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+
 
     auto t_start = std::chrono::high_resolution_clock::now();
     // the work...
@@ -460,11 +458,26 @@ int main()
     triangle2.pos = vec3(0,0,-1.5);
     do
     {
+
         //getsTime Dif
         t_start = t_end;
         t_end = std::chrono::high_resolution_clock::now();
 
         deltaTime = std::chrono::duration<double>(t_end - t_start).count();
+
+        /*timeToShader -= deltaTime;
+        if (timeToShader < 0)
+        {
+            timeToShader = 3;
+            GLuint newProgramID = LoadShaders("MyVertex.shader", "MyFragment.shader");
+            // Use our shader
+            glUseProgram(newProgramID);
+
+            glDeleteProgram(programID);
+            programID = newProgramID;
+        }*/
+
+ 
 
         // Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
