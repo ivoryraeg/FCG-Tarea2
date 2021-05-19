@@ -46,6 +46,7 @@ class Triangle
 {
     // An array of 3 vectors which represents 3 vertices
 public:
+    Triangle(){};
     glm::vec3 vertices[3] = {
         vec3(-1, -1, 0),
         vec3(1, -1, 0),
@@ -177,7 +178,7 @@ GLuint loadDDS(const char * imagepath){
         printf("error 3\n");
         return 0;
     }
-        // Create one OpenGL texture
+    // Create one OpenGL texture
     GLuint textureID;
     glGenTextures(1, &textureID);
 
@@ -269,10 +270,15 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,                                // stride
         (void*)0                          // array buffer offset
     );
+    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS){
+        glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),1);
+    }  
+    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS){
+        glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),2);
+    }
     // Draw the triangle !
-      
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
-    glDisableVertexAttribArray(0);
+    //glDisableVertexAttribArray(0);
 
     glUseProgram(programID2);
     glEnableVertexAttribArray(0);
@@ -286,12 +292,26 @@ void Scene2(double deltaTime, GLFWwindow *window)
         (void *)0 // array buffer offset
     );
 
-    // Draw the triangle !
-       
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+    glVertexAttribPointer(
+        1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+        2,                                // size : U+V => 2
+        GL_FLOAT,                         // type
+        GL_FALSE,                         // normalized?
+        0,                                // stride
+        (void*)0                          // array buffer offset
+    );
+    if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS){
+        glUniform1i(glGetUniformLocation(programID2,"myTextureSampler"),1);
+    }  
+    if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS){
+        glUniform1i(glGetUniformLocation(programID2,"myTextureSampler"),2);
+    }
+    // Draw the triangle ! 
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
 
     glDisableVertexAttribArray(0);
-
 
 
     // Don't forget to #include <glm/gtc/quaternion.hpp> and <glm/gtx/quaternion.hpp>
@@ -331,11 +351,9 @@ void Scene2(double deltaTime, GLFWwindow *window)
             triangle1.scale += vec3(0,0,+deltaTime);
         }
     }
-
-    triangle2.Rotate(vec3(0,-deltaTime,deltaTime));
-
+    triangle2.Rotate(vec3(0,0,-deltaTime));
     triangle1.PassToBuffer(g_vertex_buffer_data1);
-    //triangle2.PassToBuffer(g_vertex_buffer_data2);
+    triangle2.PassToBuffer(g_vertex_buffer_data2);
     
 }
 
@@ -390,7 +408,6 @@ int main()
     GLuint VertexArrayID[2];
     glGenVertexArrays(2, VertexArrayID);
     glBindVertexArray(VertexArrayID[0]);
-    glBindVertexArray(VertexArrayID[1]);
 
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
     glGenBuffers(2, vertexbuffer);
@@ -400,8 +417,8 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
     glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);
 
-
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);    
+    glBindVertexArray(VertexArrayID[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);   
     glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
 
     GLuint unit = 0;
@@ -409,10 +426,19 @@ int main()
     Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
 
-    glGenBuffers(1, &uvbuffer);
+    glGenBuffers(2, &uvbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("uvtemplate.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+    
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("uvtemplate.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
 
     auto t_start = std::chrono::high_resolution_clock::now();
     // the work...
@@ -440,8 +466,6 @@ int main()
             glDeleteProgram(programID);
             programID = newProgramID;
         }
-
- 
 
         // Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

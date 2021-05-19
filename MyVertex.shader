@@ -4,7 +4,8 @@ layout(location = 0) in vec3 vertexPosition_modelspace;
 out vec3 fragmentColor;
 out vec2 UV;
 void main(){
-    gl_Position.xyz = vertexPosition_modelspace*0.5 -vec3(.1,.1,1);
+    gl_Position.xyz = vertexPosition_modelspace*0.5 - vec3(0.1,0.1,0.1);
+    
     if(gl_Position.y < 0 ){
         gl_Position.y = - gl_Position.y;
     }
