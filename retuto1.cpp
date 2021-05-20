@@ -11,6 +11,7 @@
 #include <vector>
 #include <time.h>
 #include <chrono>
+#include <math.h>
 
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -40,11 +41,17 @@ GLuint programID;
 GLuint programID2;
 GLuint uvbuffer;
 GLuint Texture;
+GLuint normalbuffer;
+
+std::vector<glm::vec3> vertices;
+std::vector<glm::vec2> uvs;
+std::vector<glm::vec3> normals;
 
 class Triangle
 {
     // An array of 3 vectors which represents 3 vertices
 public:
+    glm::vec3 normal;
     glm::vec3 vertices[3] = {
         vec3(-1, -1, 0),
         vec3(1, -1, 0),
@@ -268,6 +275,19 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,                                // stride
         (void*)0                          // array buffer offset
     );
+
+     //3rd attribute buffer : normals
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glVertexAttribPointer(
+			2,                                // attribute
+			3,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+        
     if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS){
         glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),0);
     }
@@ -277,6 +297,8 @@ void Scene2(double deltaTime, GLFWwindow *window)
     if(glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS){
         glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),2);
     }
+
+    
     // Draw the triangle !
       
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
@@ -365,10 +387,24 @@ void Scene2(double deltaTime, GLFWwindow *window)
     
 }
 
+
+
 int main()
 {
 
     float y = 0;
+
+    vec3 borde1 = triangle1.vertices[2]-triangle1.vertices[1];
+    vec3 borde2 = triangle1.vertices[3]-triangle1.vertices[1];
+    triangle1.normal = cross(borde1,borde2);
+
+    /*
+
+    edge1 = v2-v1
+    edge2 = v3-v1
+    triangle.normal = cross(edge1, edge2).normalize()
+    */
+
 
     // Initialise GLFW
     glewExperimental = true; // Needed for core profile
@@ -410,6 +446,13 @@ int main()
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("MyVertex.shader", "MyFragment.shader");
     programID2 = LoadShaders("MyVertex2.shader", "MyFragment.shader");
+    GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+    GLuint programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+
+    //Get a handle for our "MVP" uniform
+    GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
+	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
     // Use our shader
     glUseProgram(programID);
 
@@ -430,6 +473,8 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);    
     glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
 
+
+
     GLuint unit = 0;
     glActiveTexture(GL_TEXTURE0 + unit);
     Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
@@ -449,6 +494,13 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
+    GLuint normalbuffer;
+    glGenBuffers(1, &normalbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+
+    GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+    GLuint LightID2 = glGetUniformLocation(programID2, "LightPosition_worldspace");
 
     auto t_start = std::chrono::high_resolution_clock::now();
     // the work...
@@ -458,7 +510,8 @@ int main()
     triangle2.pos = vec3(0,0,-1.5);
     do
     {
-
+        std::cout << triangle1.normal[0] << " , " << triangle1.normal[1] << " , " << triangle1.normal[2] << std::endl;
+        
         //getsTime Dif
         t_start = t_end;
         t_end = std::chrono::high_resolution_clock::now();
