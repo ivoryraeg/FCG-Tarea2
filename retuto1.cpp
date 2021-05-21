@@ -250,7 +250,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
 {
     // Draw triangle...
 
-    glUseProgram(programID3);
+    glUseProgram(programID);
     // 1st attribute buffer : vertices
     glEnableVertexAttribArray(0);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DRAW_BUFFER);
@@ -452,7 +452,7 @@ int main()
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("MyVertex.shader", "MyFragment.shader");
     programID2 = LoadShaders("MyVertex2.shader", "MyFragment.shader");
-    programID3 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+    programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
     programID4 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
     //Get a handle for our "MVP" uniform
@@ -491,7 +491,7 @@ int main()
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("uvtemplate.DDS");
+    Texture = loadDDS("doomer.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
 
     glGenBuffers(1, &uvbuffer);
