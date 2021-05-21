@@ -43,7 +43,7 @@ GLuint programID3;
 GLuint programID4;
 GLuint uvbuffer;
 GLuint Texture;
-GLuint normalbuffer;
+GLuint normalbuffer[1];
 
 std::vector<glm::vec3> vertices;
 std::vector<glm::vec2> uvs;
@@ -105,7 +105,17 @@ static const GLfloat g_uv_buffer_data[] = {
     1.0f, 1.0f-0.0f,
     1.0f, 1.0f-1.0f
 };
+static GLfloat g_normal_buffer_data1[] = {
+    0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f
+    };
 
+static GLfloat g_normal_buffer_data2[] = {
+    0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f
+    };
 
 /*GLuint loadTGA_glfw(const char * imagepath){
 
@@ -280,7 +290,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
 
      //3rd attribute buffer : normals
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[0]);
 		glVertexAttribPointer(
 			2,                                // attribute
 			3,                                // size
@@ -305,6 +315,8 @@ void Scene2(double deltaTime, GLFWwindow *window)
       
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
     glUseProgram(programID2);
     glEnableVertexAttribArray(0);
@@ -327,6 +339,18 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,                                // stride
         (void*)0                          // array buffer offset
     );
+       //3rd attribute buffer : normals
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[1]);
+		glVertexAttribPointer(
+		2,                                // attribute
+		3,                                // size
+		GL_FLOAT,                         // type
+		GL_FALSE,                         // normalized?
+		0,                                // stride
+		(void*)0                          // array buffer offset
+	);
+        
     if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS){
         glUniform1i(glGetUniformLocation(programID2,"myTextureSampler"),0);
     }
@@ -409,6 +433,8 @@ int main()
     triangle.normal = cross(edge1, edge2).normalize()
     */
 
+    vec3 position;
+ 
 
     // Initialise GLFW
     glewExperimental = true; // Needed for core profile
@@ -450,15 +476,12 @@ int main()
     glDepthFunc(GL_LESS);
 
     // Create and compile our GLSL program from the shaders
-    programID = LoadShaders("MyVertex.shader", "MyFragment.shader");
-    programID2 = LoadShaders("MyVertex2.shader", "MyFragment.shader");
+    //programID = LoadShaders("MyVertex.shader", "MyFragment.shader");
+    //programID2 = LoadShaders("MyVertex2.shader", "MyFragment.shader");
     programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
-    programID4 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+    programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
-    //Get a handle for our "MVP" uniform
-    GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
-	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
+
     // Use our shader
     glUseProgram(programID);
 
@@ -498,16 +521,21 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
-    GLuint normalbuffer;
-    glGenBuffers(1, &normalbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-    glBufferData(GL_ARRAY_BUFFER, triangle1.normal.length() * sizeof(glm::vec3), &triangle1.normal[0], GL_STATIC_DRAW);
+    glGenBuffers(2, normalbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[0]);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(g_normal_buffer_data1), g_normal_buffer_data1, GL_STATIC_DRAW);
+    glNamedBufferData(normalbuffer[0], sizeof(g_normal_buffer_data1), g_normal_buffer_data1, GL_STATIC_DRAW);
 
+    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[1]);
+    glNamedBufferData(normalbuffer[1], sizeof(g_normal_buffer_data2), g_normal_buffer_data2, GL_STATIC_DRAW);
+
+
+/*
     GLuint vertexbuffer;
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     glBufferData(GL_ARRAY_BUFFER, triangle1.vertices->length() * sizeof(glm::vec3), &triangle1.vertices[0], GL_STATIC_DRAW);
-
+*/
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
     GLuint LightID2 = glGetUniformLocation(programID2, "LightPosition_worldspace");
 
@@ -516,11 +544,43 @@ int main()
     auto t_end = std::chrono::high_resolution_clock::now();
 
     double deltaTime = 0;
-    triangle2.pos = vec3(0,0,-1.5);
+    triangle1.pos = vec3(1,0,0);
+    triangle2.pos = vec3(1,0,0);
+
+        GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+        GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
+        GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
+
+        GLuint MatrixID2 = glGetUniformLocation(programID2, "MVP");
+        GLuint ViewMatrixID2 = glGetUniformLocation(programID2, "V");
+        GLuint ModelMatrixID2 = glGetUniformLocation(programID2, "M");
+
     do
     {
+
+        // Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+	    glm::mat4 ProjectionMatrix = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+        // Camera matrix
+        glm::mat4 ViewMatrix       = glm::lookAt(
+                                    glm::vec3 (0,5,10),            // Camera is here
+                                    glm::vec3 (0,0,0),            // and looks here : at the same position, plus "direction"
+                                    glm::vec3 (0,1,0)             // Head is up (set to 0,-1,0 to look upside-down)
+                            );
+        glm::mat4 ModelMatrix = glm::mat4(1.0);
+        glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+
         //std::cout << triangle1.normal[0] << " , " << triangle1.normal[1] << " , " << triangle1.normal[2] << std::endl;
         
+        //Get a handle for our "MVP" uniform
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+
+        glUseProgram(programID);
+        glUseProgram(programID2);
+
+
         //getsTime Dif
         t_start = t_end;
         t_end = std::chrono::high_resolution_clock::now();
