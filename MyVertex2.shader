@@ -9,6 +9,7 @@ void main(){
     if(gl_Position.y < 0 ){
         gl_Position.y = - gl_Position.y;
     }
+    
     gl_Position.w = 1.0;
     UV = vertexUV;
 }

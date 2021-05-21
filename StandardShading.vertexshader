@@ -1,5 +1,7 @@
 #version 330 core
 
+out vec3 fragmentColor;
+
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 vertexPosition_modelspace;
 layout(location = 1) in vec2 vertexUV;
@@ -20,6 +22,15 @@ uniform vec3 LightPosition_worldspace;
 
 void main(){
 
+	gl_Position.xyz = vertexPosition_modelspace*0.5 - vec3(0.1,0.1,0.1);
+    
+    if(gl_Position.y < 0 ){
+        gl_Position.y = - gl_Position.y;
+    }
+    
+    gl_Position.w = 1.0;
+    UV = vertexUV;
+	
 	// Output position of the vertex, in clip space : MVP * position
 	gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
 	

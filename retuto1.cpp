@@ -39,6 +39,8 @@ double timeToShader = 3;
 GLuint vertexbuffer[2];
 GLuint programID;
 GLuint programID2;
+GLuint programID3;
+GLuint programID4;
 GLuint uvbuffer;
 GLuint Texture;
 GLuint normalbuffer;
@@ -248,7 +250,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
 {
     // Draw triangle...
 
-    glUseProgram(programID);
+    glUseProgram(programID3);
     // 1st attribute buffer : vertices
     glEnableVertexAttribArray(0);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DRAW_BUFFER);
@@ -394,10 +396,12 @@ int main()
 
     float y = 0;
 
-    vec3 borde1 = triangle1.vertices[2]-triangle1.vertices[1];
-    vec3 borde2 = triangle1.vertices[3]-triangle1.vertices[1];
-    triangle1.normal = cross(borde1,borde2);
-
+    std::cout << "x : " << triangle1.normal.x << " y : " << triangle1.normal.y << " z : " << triangle1.normal.z << std::endl;
+    
+    vec3 borde1 = triangle1.vertices[1]-triangle1.vertices[0];
+    vec3 borde2 = triangle1.vertices[2]-triangle1.vertices[0];
+    triangle1.normal = normalize(cross(borde1,borde2));
+    std::cout << "x : " << triangle1.normal.x << " y : " << triangle1.normal.y << " z : " << triangle1.normal.z << std::endl;
     /*
 
     edge1 = v2-v1
@@ -438,6 +442,8 @@ int main()
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
+    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
@@ -446,8 +452,8 @@ int main()
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("MyVertex.shader", "MyFragment.shader");
     programID2 = LoadShaders("MyVertex2.shader", "MyFragment.shader");
-    GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
-    GLuint programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+    programID3 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+    programID4 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
     //Get a handle for our "MVP" uniform
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
@@ -473,8 +479,6 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);    
     glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
 
-
-
     GLuint unit = 0;
     glActiveTexture(GL_TEXTURE0 + unit);
     Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
@@ -497,7 +501,12 @@ int main()
     GLuint normalbuffer;
     glGenBuffers(1, &normalbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, triangle1.normal.length() * sizeof(glm::vec3), &triangle1.normal[0], GL_STATIC_DRAW);
+
+    GLuint vertexbuffer;
+    glGenBuffers(1, &vertexbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, triangle1.vertices->length() * sizeof(glm::vec3), &triangle1.vertices[0], GL_STATIC_DRAW);
 
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
     GLuint LightID2 = glGetUniformLocation(programID2, "LightPosition_worldspace");
@@ -510,7 +519,7 @@ int main()
     triangle2.pos = vec3(0,0,-1.5);
     do
     {
-        std::cout << triangle1.normal[0] << " , " << triangle1.normal[1] << " , " << triangle1.normal[2] << std::endl;
+        //std::cout << triangle1.normal[0] << " , " << triangle1.normal[1] << " , " << triangle1.normal[2] << std::endl;
         
         //getsTime Dif
         t_start = t_end;
