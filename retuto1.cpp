@@ -39,11 +39,9 @@ double timeToShader = 3;
 GLuint vertexbuffer[2];
 GLuint programID;
 GLuint programID2;
-GLuint programID3;
-GLuint programID4;
 GLuint uvbuffer;
 GLuint Texture;
-GLuint normalbuffer[1];
+GLuint normalbuffer[2];
 
 std::vector<glm::vec3> vertices;
 std::vector<glm::vec2> uvs;
@@ -117,28 +115,6 @@ static GLfloat g_normal_buffer_data2[] = {
     0.0f, 0.0f, 1.0f
     };
 
-/*GLuint loadTGA_glfw(const char * imagepath){
-
-    // Create one OpenGL texture
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-
-    // "Bind" the newly created texture : all future texture functions will modify this texture
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    // Read the file, call glTexImage2D with the right parameters
-    glfwLoadTexture2D(imagepath, 0);
-
-    // Nice trilinear filtering.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    // Return the ID of the texture we just created
-    return textureID;
-}*/
 GLuint loadDDS(const char * imagepath){
 
     unsigned char header[124];
@@ -195,7 +171,7 @@ GLuint loadDDS(const char * imagepath){
         printf("error 3\n");
         return 0;
     }
-        // Create one OpenGL texture
+    // Create one OpenGL texture
     GLuint textureID;
     glGenTextures(1, &textureID);
 
@@ -221,45 +197,8 @@ GLuint loadDDS(const char * imagepath){
     return textureID;
 }
 
-void Scene1(double deltaTime)
-{
-    static float yDirection = 1;
-    // Draw triangle...
-
-    // 1st attribute buffer : vertices
-    glEnableVertexAttribArray(0);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DRAW_BUFFER);
-    //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
-    //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);
-    glVertexAttribPointer(
-        0,        // attribute 0. No particular reason for 0, but must match the layout in the shader.
-        3,        // size
-        GL_FLOAT, // type
-        GL_FALSE, // normalized?
-        0,        // stride
-        (void *)0 // array buffer offset
-    );    
-    // Draw the triangle !
-    glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
-    glDisableVertexAttribArray(0);
-
-    if (g_vertex_buffer_data1[1] > 1 && yDirection > 0)
-    {
-        yDirection = -1;
-        g_vertex_buffer_data1[1] -= (g_vertex_buffer_data1[1] - 1);
-    }
-    else if (g_vertex_buffer_data1[1] < -1 && yDirection < 0)
-    {
-        yDirection = 1;
-        g_vertex_buffer_data1[1] -= (g_vertex_buffer_data1[1] + 1);
-    }
-    g_vertex_buffer_data1[1] += deltaTime * yDirection * 2;
-}
-
 void Scene2(double deltaTime, GLFWwindow *window)
 {
-    // Draw triangle...
-
     glUseProgram(programID);
     // 1st attribute buffer : vertices
     glEnableVertexAttribArray(0);
@@ -273,10 +212,7 @@ void Scene2(double deltaTime, GLFWwindow *window)
         0,        // stride
         (void *)0 // array buffer offset
     );
-
-    // Bind our texture in Texture Unit 0
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, Texture);    
+ 
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glVertexAttribPointer(
@@ -310,7 +246,6 @@ void Scene2(double deltaTime, GLFWwindow *window)
         glUniform1i(glGetUniformLocation(programID,"myTextureSampler"),2);
     }
 
-    
     // Draw the triangle !
       
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
@@ -365,76 +300,61 @@ void Scene2(double deltaTime, GLFWwindow *window)
     glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
 
     glDisableVertexAttribArray(0);
-
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
 
     // Don't forget to #include <glm/gtc/quaternion.hpp> and <glm/gtx/quaternion.hpp>
-
-    triangle1.Rotate(vec3(0,0,deltaTime));
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
         triangle1.Translate(vec3(-deltaTime,0,0));
     }
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
         triangle1.Translate(vec3(deltaTime,0,0));
     }
-
+    //Escala en x
     if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS){
         
-        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){//Lo hace en sentido contrario
             triangle1.scale += vec3(-deltaTime,0,0);
         }   
         else{
             triangle1.scale += vec3(+deltaTime,0,0);
         }
     }
+    //Escala en y
     if(glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS){
         
-        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){//Lo hace en sentido contrario
             triangle1.scale += vec3(0,-deltaTime,0);
         }   
         else{
             triangle1.scale += vec3(0,+deltaTime,0);
         }
     }
+    //Escala en z
     if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS){
         
-        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){//Lo hace en sentido contrario
             triangle1.scale += vec3(0,0,-deltaTime);
         }   
         else{
             triangle1.scale += vec3(0,0,+deltaTime);
         }
     }
-
-    triangle2.Rotate(vec3(0,deltaTime,-deltaTime));
-
+    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS){//Rota triangulo 1 hacia izq
+        triangle1.Rotate(vec3(0,0,deltaTime));
+    }
+    if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS){//Rota triangulo 1 hacia der
+        triangle1.Rotate(vec3(0,0,-deltaTime));
+    }
+    triangle2.Rotate(vec3(0,0,-deltaTime));//Rota triangulo 2 hacia izq automaticamente
     triangle1.PassToBuffer(g_vertex_buffer_data1);
     triangle2.PassToBuffer(g_vertex_buffer_data2);
     
 }
 
-
-
 int main()
 {
-
-    float y = 0;
-
-    std::cout << "x : " << triangle1.normal.x << " y : " << triangle1.normal.y << " z : " << triangle1.normal.z << std::endl;
-    
-    vec3 borde1 = triangle1.vertices[1]-triangle1.vertices[0];
-    vec3 borde2 = triangle1.vertices[2]-triangle1.vertices[0];
-    triangle1.normal = normalize(cross(borde1,borde2));
-    std::cout << "x : " << triangle1.normal.x << " y : " << triangle1.normal.y << " z : " << triangle1.normal.z << std::endl;
-    /*
-
-    edge1 = v2-v1
-    edge2 = v3-v1
-    triangle.normal = cross(edge1, edge2).normalize()
-    */
-
-    vec3 position;
- 
 
     // Initialise GLFW
     glewExperimental = true; // Needed for core profile
@@ -446,8 +366,6 @@ int main()
     glfwWindowHint(GLFW_SAMPLES, 4);               // 4x antialiasing
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
 
     // Open a window and create its OpenGL context
     GLFWwindow *window; // (In the accompanying source code, this variable is global for simplicity)
@@ -476,11 +394,8 @@ int main()
     glDepthFunc(GL_LESS);
 
     // Create and compile our GLSL program from the shaders
-    //programID = LoadShaders("MyVertex.shader", "MyFragment.shader");
-    //programID2 = LoadShaders("MyVertex2.shader", "MyFragment.shader");
     programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
     programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
-
 
     // Use our shader
     glUseProgram(programID);
@@ -492,12 +407,9 @@ int main()
 
     // Generate 1 buffer, put the resulting identifier in vertexbuffer
     glGenBuffers(2, vertexbuffer);
-    // The following commands will talk about our 'vertexbuffer' buffer
-    //glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);    
     // Give our vertices to OpenGL.
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[0]);
     glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);
-
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);    
     glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
@@ -517,25 +429,18 @@ int main()
     Texture = loadDDS("doomer.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
 
-    glGenBuffers(1, &uvbuffer);
+    glGenBuffers(2, &uvbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
     glGenBuffers(2, normalbuffer);
+
     glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[0]);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(g_normal_buffer_data1), g_normal_buffer_data1, GL_STATIC_DRAW);
     glNamedBufferData(normalbuffer[0], sizeof(g_normal_buffer_data1), g_normal_buffer_data1, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[1]);
     glNamedBufferData(normalbuffer[1], sizeof(g_normal_buffer_data2), g_normal_buffer_data2, GL_STATIC_DRAW);
 
-
-/*
-    GLuint vertexbuffer;
-    glGenBuffers(1, &vertexbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, triangle1.vertices->length() * sizeof(glm::vec3), &triangle1.vertices[0], GL_STATIC_DRAW);
-*/
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
     GLuint LightID2 = glGetUniformLocation(programID2, "LightPosition_worldspace");
 
@@ -544,8 +449,8 @@ int main()
     auto t_end = std::chrono::high_resolution_clock::now();
 
     double deltaTime = 0;
-    triangle1.pos = vec3(1,0,0);
-    triangle2.pos = vec3(1,0,0);
+    triangle1.pos = vec3(0,0,0);
+    triangle2.pos = vec3(.5,0,0);
 
         GLuint MatrixID = glGetUniformLocation(programID, "MVP");
         GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
@@ -557,7 +462,6 @@ int main()
 
     do
     {
-
         // Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	    glm::mat4 ProjectionMatrix = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         // Camera matrix
@@ -568,18 +472,13 @@ int main()
                             );
         glm::mat4 ModelMatrix = glm::mat4(1.0);
         glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-
-        //std::cout << triangle1.normal[0] << " , " << triangle1.normal[1] << " , " << triangle1.normal[2] << std::endl;
         
         //Get a handle for our "MVP" uniform
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-
         glUseProgram(programID);
-        glUseProgram(programID2);
-
 
         //getsTime Dif
         t_start = t_end;
@@ -587,29 +486,14 @@ int main()
 
         deltaTime = std::chrono::duration<double>(t_end - t_start).count();
 
-        /*timeToShader -= deltaTime;
-        if (timeToShader < 0)
-        {
-            timeToShader = 3;
-            GLuint newProgramID = LoadShaders("MyVertex.shader", "MyFragment.shader");
-            // Use our shader
-            glUseProgram(newProgramID);
-
-            glDeleteProgram(programID);
-            programID = newProgramID;
-        }*/
-
- 
-
         // Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         //Draw through function
         Scene2(deltaTime, window);
-
-        
+    
         glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);        
-        //glUseProgram(programID2);
+        glUseProgram(programID2);
         glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
         
         // Swap buffers
