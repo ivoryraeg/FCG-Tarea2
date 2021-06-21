@@ -36,9 +36,15 @@ const unsigned long FOURCC_DXT5 = 0x35545844; //(MAKEFOURCC('D','X','T','5'))
 
 double timeToShader = 3;
 // This will identify our vertex buffer
+
+int screen = 0;
+
 GLuint vertexbuffer[2];
+GLuint vertexbufferUI[2];
+GLuint uvbufferUI[2];
 GLuint programID;
 GLuint programID2;
+GLuint programUI;
 GLuint uvbuffer;
 GLuint Texture;
 GLuint normalbuffer[2];
@@ -81,6 +87,7 @@ public:
 
 Triangle triangle1, triangle2;
 
+
 static GLfloat g_vertex_buffer_data1[] = {
     -1.0f, -1.0f, 0.0f,
     1.0f, -1.0f, 0.0f,
@@ -91,6 +98,17 @@ static GLfloat g_vertex_buffer_data2[] = {
     1.0f, -1.0f, 0.0f,
     0.0f, 1.0f, 0.0f
     };
+
+static GLfloat g_vertex_buffer_dataUI1[] = {
+    -1.0f, -1.0f, 0.0f,
+    -1.0f, 1.0f, 0.0f,
+    1.0f, 1.0f, 0.0f
+};
+static GLfloat g_vertex_buffer_dataUI2[] = {
+    -1.0f, -1.0f, 0.0f,
+    1.0f, 1.0f, 0.0f,
+    1.0f, -1.0f, 0.0f
+};
 
 static const GLfloat g_color_buffer_data[] = {
     0.583f,  0.771f,  0.014f,
@@ -103,6 +121,17 @@ static const GLfloat g_uv_buffer_data[] = {
     1.0f, 1.0f-0.0f,
     1.0f, 1.0f-1.0f
 };
+static const GLfloat g_uv_buffer_dataUI1[] = {
+    0.0f, 1.0f-0.0f,
+    0.0f, 1.0f-1.0f,
+    1.0f, 1.0f-1.0f
+};
+static const GLfloat g_uv_buffer_dataUI2[] = {
+    0.0f, 1.0f-0.0f,
+    1.0f, 1.0f-1.0f,
+    1.0f, 1.0f-0.0f
+};
+
 static GLfloat g_normal_buffer_data1[] = {
     0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f,
@@ -114,6 +143,8 @@ static GLfloat g_normal_buffer_data2[] = {
     0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f
     };
+
+
 
 GLuint loadDDS(const char * imagepath){
 
@@ -196,6 +227,82 @@ GLuint loadDDS(const char * imagepath){
 
     return textureID;
 }
+
+void Scene1(double deltaTime,GLFWwindow *window)
+{
+   
+    glUseProgram(programUI);
+    static float yDirection = 1;
+    // Draw triangle...
+
+    for(int i=0;i<2;i++){
+        auto g_vertex = g_vertex_buffer_dataUI1;
+        auto g_uv = g_uv_buffer_dataUI1;
+        if(i==1){
+            g_vertex = g_vertex_buffer_dataUI2;
+            g_uv = g_uv_buffer_dataUI2; 
+        }
+
+        // 1st attribute buffer : vertices
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbufferUI[i]);
+        //glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex), g_vertex, GL_STATIC_DRAW);
+        glVertexAttribPointer(
+            0,        // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,        // size
+            GL_FLOAT, // type
+            GL_FALSE, // normalized?
+            0,        // stride
+            (void *)0 // array buffer offset
+        );    
+        
+        // 2st attribute buffer : uv
+        glEnableVertexAttribArray(1);        
+        glBindBuffer(GL_ARRAY_BUFFER, uvbufferUI[i]);
+        //glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv), g_uv, GL_STATIC_DRAW);
+        glVertexAttribPointer(
+            1,        // attribute 1. No particular reason for 0, but must match the layout in the shader.
+            2,        // size
+            GL_FLOAT, // type
+            GL_FALSE, // normalized?
+            0,        // stride
+            (void *)0 // array buffer offset
+        );    
+        // Draw the triangle !
+        glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+    }    
+
+    auto t_startLoad = std::chrono::high_resolution_clock::now();
+    // the work...
+    auto t_endLoad = std::chrono::high_resolution_clock::now();
+
+    double deltaTimeLoad = 0;
+
+    float cont = 5;
+
+    if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS){
+        if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE){
+            glUniform1i(glGetUniformLocation(programUI,"myTextureSampler"),0);
+
+            while(cont > 0){
+                t_startLoad = t_endLoad;
+                t_endLoad = std::chrono::high_resolution_clock::now();
+                std::cout << cont << std::endl;
+                deltaTimeLoad = std::chrono::duration<double>(t_endLoad - t_startLoad).count();
+                cont -= deltaTimeLoad;
+
+                if(cont <= 0)
+                    {
+                        screen = 1;
+                    }
+            }
+           
+        }
+    }
+}
+
 
 void Scene2(double deltaTime, GLFWwindow *window)
 {
@@ -284,7 +391,8 @@ void Scene2(double deltaTime, GLFWwindow *window)
 		GL_FALSE,                         // normalized?
 		0,                                // stride
 		(void*)0                          // array buffer offset
-	);
+	
+    );
         
     if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS){
         glUniform1i(glGetUniformLocation(programID2,"myTextureSampler"),0);
@@ -350,6 +458,8 @@ void Scene2(double deltaTime, GLFWwindow *window)
     triangle2.Rotate(vec3(0,0,-deltaTime));//Rota triangulo 2 hacia izq automaticamente
     triangle1.PassToBuffer(g_vertex_buffer_data1);
     triangle2.PassToBuffer(g_vertex_buffer_data2);
+
+   
     
 }
 
@@ -369,7 +479,7 @@ int main()
 
     // Open a window and create its OpenGL context
     GLFWwindow *window; // (In the accompanying source code, this variable is global for simplicity)
-    window = glfwCreateWindow(768, 768, "Tutorial 01", NULL, NULL);
+    window = glfwCreateWindow(1024, 1024, "Tutorial 01", NULL, NULL);
     if (window == NULL)
     {
         fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
@@ -397,6 +507,7 @@ int main()
     programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
     programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
+    programUI = LoadShaders("MyVertex3.shader", "MyFragmentBK.shader");
     // Use our shader
     glUseProgram(programID);
 
@@ -414,19 +525,32 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer[1]);    
     glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
 
+    GLuint VertexArrayIDUI[2];
+    // Generate 2 buffer, put the resulting identifier in vertexbuffer
+    glGenVertexArrays(2, VertexArrayIDUI);
+    glGenBuffers(2, vertexbufferUI);
+    // The following commands will talk about our 'vertexbuffer' buffer
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbufferUI[0]);        
+    glNamedBufferData(VertexArrayIDUI[0], sizeof(g_vertex_buffer_dataUI1), g_vertex_buffer_dataUI1, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbufferUI[1]);    
+    glNamedBufferData(VertexArrayIDUI[1], sizeof(g_vertex_buffer_dataUI2), g_vertex_buffer_dataUI2, GL_STATIC_DRAW);
+
+    glUseProgram(programUI);
+
     GLuint unit = 0;
     glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("test_textura_PNG_DXT1_1.DDS");
+    Texture = loadDDS("Pantalla_Inicial.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);    
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("uvtemplate.DDS");
+    Texture = loadDDS("doomer.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("doomer.DDS");
+    Texture = loadDDS("uvtemplate.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
 
     glGenBuffers(2, &uvbuffer);
@@ -434,6 +558,14 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
     glGenBuffers(2, normalbuffer);
+
+    glGenBuffers(2, uvbufferUI);
+    glBindBuffer(GL_ARRAY_BUFFER, uvbufferUI[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_dataUI1), g_uv_buffer_dataUI1, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, uvbufferUI[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_dataUI2), g_uv_buffer_dataUI2, GL_STATIC_DRAW);
+
 
     glBindBuffer(GL_ARRAY_BUFFER, normalbuffer[0]);
     glNamedBufferData(normalbuffer[0], sizeof(g_normal_buffer_data1), g_normal_buffer_data1, GL_STATIC_DRAW);
@@ -459,6 +591,9 @@ int main()
         GLuint MatrixID2 = glGetUniformLocation(programID2, "MVP");
         GLuint ViewMatrixID2 = glGetUniformLocation(programID2, "V");
         GLuint ModelMatrixID2 = glGetUniformLocation(programID2, "M");
+
+
+
 
     do
     {
@@ -490,7 +625,12 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         //Draw through function
-        Scene2(deltaTime, window);
+        if(screen == 0){
+            Scene1(deltaTime, window);
+        }else if(screen == 1){
+            Scene2(deltaTime, window);
+        }
+
     
         glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);        
         glUseProgram(programID2);
