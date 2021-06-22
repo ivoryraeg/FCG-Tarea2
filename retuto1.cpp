@@ -228,6 +228,7 @@ GLuint loadDDS(const char * imagepath){
     return textureID;
 }
 
+
 void Scene1(double deltaTime,GLFWwindow *window)
 {
    
@@ -273,6 +274,9 @@ void Scene1(double deltaTime,GLFWwindow *window)
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
     }    
+}
+
+void loadScreen(GLFWwindow *window, int scene){
 
     auto t_startLoad = std::chrono::high_resolution_clock::now();
     // the work...
@@ -280,25 +284,31 @@ void Scene1(double deltaTime,GLFWwindow *window)
 
     double deltaTimeLoad = 0;
 
-    float cont = 5;
+    float cont = 2;
 
     if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS){
         if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE){
-            glUniform1i(glGetUniformLocation(programUI,"myTextureSampler"),0);
 
+            std::cout << "Hola" << std::endl;
             while(cont > 0){
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                glUniform1i(glGetUniformLocation(programUI,"myTextureSampler"),1);
+                Scene1(deltaTimeLoad,window);
+
                 t_startLoad = t_endLoad;
                 t_endLoad = std::chrono::high_resolution_clock::now();
-                std::cout << cont << std::endl;
+                //std::cout << cont << std::endl;
                 deltaTimeLoad = std::chrono::duration<double>(t_endLoad - t_startLoad).count();
                 cont -= deltaTimeLoad;
-
                 if(cont <= 0)
                     {
-                        screen = 1;
+                        screen = scene;
                     }
+                glfwSwapBuffers(window);
+                glfwPollEvents();
             }
-           
+            std::cout << "Adios" << std::endl;  
         }
     }
 }
@@ -414,10 +424,21 @@ void Scene2(double deltaTime, GLFWwindow *window)
 
     // Don't forget to #include <glm/gtc/quaternion.hpp> and <glm/gtx/quaternion.hpp>
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-        triangle1.Translate(vec3(-deltaTime,0,0));
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){//Sube
+            triangle1.Translate(vec3(0,deltaTime,0));
+        }   
+        else{
+            triangle1.Translate(vec3(-deltaTime,0,0));
+        }
     }
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-        triangle1.Translate(vec3(deltaTime,0,0));
+
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){//Baja
+            triangle1.Translate(vec3(0,-deltaTime,0));
+        }   
+        else{
+            triangle1.Translate(vec3(deltaTime,0,0));
+        }
     }
     //Escala en x
     if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS){
@@ -626,12 +647,15 @@ int main()
 
         //Draw through function
         if(screen == 0){
+            loadScreen(window, 1);
+            glUseProgram(programUI);
+            glUniform1i(glGetUniformLocation(programUI, "myTextureSampler"), 0);  
             Scene1(deltaTime, window);
         }else if(screen == 1){
+            loadScreen(window, 0);
             Scene2(deltaTime, window);
         }
 
-    
         glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);        
         glUseProgram(programID2);
         glNamedBufferData(VertexArrayID[1], sizeof(g_vertex_buffer_data2), g_vertex_buffer_data2, GL_STATIC_DRAW);
