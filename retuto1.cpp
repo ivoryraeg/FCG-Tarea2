@@ -45,6 +45,7 @@ GLuint uvbufferUI[2];
 GLuint programID;
 GLuint programID2;
 GLuint programUI;
+GLuint programID3;
 GLuint uvbuffer;
 GLuint Texture;
 GLuint normalbuffer[2];
@@ -57,7 +58,6 @@ class Triangle
 {
     // An array of 3 vectors which represents 3 vertices
 public:
-    glm::vec3 normal;
     glm::vec3 vertices[3] = {
         vec3(-1, -1, 0),
         vec3(1, -1, 0),
@@ -68,14 +68,37 @@ public:
     void Translate(vec3 movePos){
         pos += movePos*rot;
     }
-    void Rotate(vec3 eulerAngles){        
+    void Rotate(vec3 eulerAngles){
         rot = rot*quat(eulerAngles);
     } 
+    void PassToBuffer(GLfloat *vertexB, GLfloat *normals){
+        PassToBuffer(vertexB);
+        vec3 edge1 = vertices[1]*rot-vertices[0]*rot;
+        vec3 edge2 = vertices[2]*rot-vertices[0]*rot;
+        vec3 normal = normalize(cross(edge1, edge2));
+        for (int i = 0; i < 9; i += 3)
+        {
+            vec3 auxNormal = normal;
+            if(0==i){
+                auxNormal += vec3(1,0,0)*rot;
+            }
+            if(3==i){
+                auxNormal += vec3(0,1,0)*rot;
+            }
+            if(6==i){
+                auxNormal += vec3(0,0,1)*rot;
+            }
+            auxNormal = normalize(auxNormal);
+            normals[i] = auxNormal.x;
+            normals[i + 1] = auxNormal.y;
+            normals[i + 2] = auxNormal.z;
+        }
+    }
     void PassToBuffer(GLfloat *vertexB){
         int j = 0;
         for (int i = 0; i < 9; i += 3)
         {
-            vec3 vector = vertices[j]*scale*rot+pos;            
+            vec3 vector = vertices[j]*scale*rot+pos;
             vertexB[i] = vector.x;
             vertexB[i + 1] = vector.y;
             vertexB[i + 2] = vector.z;
@@ -84,6 +107,112 @@ public:
     }
 };
 
+class Muro {
+    public:
+        Triangle up;
+        Triangle down;
+        GLuint vertexBuffersID[2];
+        GLuint normalBuffersID[2];
+        GLuint UVBuffersID[2];
+        GLfloat vertexBufferUp[9];
+        GLfloat vertexBufferDown[9];
+        GLfloat normalBufferUp[9];
+        GLfloat normalBufferDown[9];
+        GLfloat UVBufferUp[6] = { 
+            0.0f, 1.0f-0.0f,
+            0.0f, 1.0f-1.0f,
+            1.0f, 1.0f-1.0f
+        };
+        GLfloat UVBufferDown[6] = { 
+            0.0f, 1.0f-0.0f,
+            1.0f, 1.0f-1.0f,
+            0.0f, 1.0f-1.0f
+        };
+        Muro(vec3 upLeft, vec3 upRight, vec3 downLeft, vec3 downRight) {
+            up.vertices[0] = downLeft;
+            up.vertices[1] = upLeft;
+            up.vertices[2] = upRight;
+
+            down.vertices[0] = downLeft;
+            down.vertices[1] = upRight;
+            down.vertices[3] = downRight;
+
+            glGenBuffers(2, UVBuffersID);
+            glBindBuffer(GL_ARRAY_BUFFER, UVBuffersID[0]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(UVBufferUp), UVBufferUp, GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, UVBuffersID[1]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(UVBufferDown), UVBufferDown, GL_STATIC_DRAW);
+
+            glGenBuffers(2, normalBuffersID);
+            glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[0]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferUp), normalBufferUp, GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[1]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferDown), normalBufferDown, GL_STATIC_DRAW);
+
+            glGenBuffers(2, vertexBuffersID);
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[0]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferUp), vertexBufferUp, GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[1]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferDown), vertexBufferDown, GL_STATIC_DRAW);
+        }
+
+        void Draw() {
+            //glUseProgram(programUI);
+            // Draw triangle...
+            up.PassToBuffer(vertexBufferUp, normalBufferUp);
+            down.PassToBuffer(vertexBufferDown, normalBufferDown);
+            for(int i=0;i<2;i++){
+                auto g_vertex = vertexBufferUp;
+                auto g_uv = UVBufferUp;
+                if(i==1){
+                    g_vertex = vertexBufferDown;
+                    g_uv = UVBufferDown; 
+                }
+
+                // 1st attribute buffer : vertices
+                glEnableVertexAttribArray(0);
+                glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[i]);
+                //glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex), g_vertex, GL_STATIC_DRAW);
+                glVertexAttribPointer(
+                    0,        // attribute 0. No particular reason for 0, but must match the layout in the shader.
+                    3,        // size
+                    GL_FLOAT, // type
+                    GL_FALSE, // normalized?
+                    0,        // stride
+                    (void *)0 // array buffer offset
+                );    
+                
+                // 2st attribute buffer : uv
+                glEnableVertexAttribArray(1);        
+                glBindBuffer(GL_ARRAY_BUFFER, UVBuffersID[i]);
+                //glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv), g_uv, GL_STATIC_DRAW);
+                glVertexAttribPointer(
+                    1,        // attribute 1. No particular reason for 0, but must match the layout in the shader.
+                    2,        // size
+                    GL_FLOAT, // type
+                    GL_FALSE, // normalized?
+                    0,        // stride
+                    (void *)0 // array buffer offset
+                );    
+                glEnableVertexAttribArray(2);
+                glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[i]);
+                //Normals
+                glVertexAttribPointer(
+                    2,        // attribute 0. No particular reason for 0, but must match the layout in the shader.
+                    3,        // size
+                    GL_FLOAT, // type
+                    GL_FALSE, // normalized?
+                    0,        // stride
+                    (void *)0 // array buffer offset
+                );   
+                // Draw the triangle !
+                glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
+                glDisableVertexAttribArray(0);
+                glDisableVertexAttribArray(1);
+                glDisableVertexAttribArray(2);
+            }    
+        }
+};
 
 Triangle triangle1, triangle2;
 
@@ -121,7 +250,7 @@ static const GLfloat g_uv_buffer_data[] = {
     1.0f, 1.0f-0.0f,
     1.0f, 1.0f-1.0f
 };
-static const GLfloat g_uv_buffer_dataUI1[] = {
+static const GLfloat g_uv_buffer_dataUI1[] = { 
     0.0f, 1.0f-0.0f,
     0.0f, 1.0f-1.0f,
     1.0f, 1.0f-1.0f
@@ -136,13 +265,13 @@ static GLfloat g_normal_buffer_data1[] = {
     0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f
-    };
+};
 
 static GLfloat g_normal_buffer_data2[] = {
     0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f
-    };
+};
 
 
 
@@ -305,6 +434,7 @@ void loadScreen(GLFWwindow *window, int scene){
                     {
                         screen = scene;
                     }
+                
                 glfwSwapBuffers(window);
                 glfwPollEvents();
             }
@@ -484,6 +614,14 @@ void Scene2(double deltaTime, GLFWwindow *window)
     
 }
 
+void Scene3(double deltaTime,GLFWwindow *window) {
+    glUseProgram(programID3);
+    static float yDirection = 1;
+    static Muro *muro = new Muro(vec3(-1, 1, 0), vec3(1, 1, 0), vec3(-1, -1, 0), vec3(1, -1, 0));
+    glUniform1i(glGetUniformLocation(programUI,"myTextureSampler"),2);
+    muro->Draw();
+}
+
 int main()
 {
 
@@ -529,6 +667,8 @@ int main()
     programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
     programUI = LoadShaders("MyVertex3.shader", "MyFragmentBK.shader");
+
+    programID3 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
     // Use our shader
     glUseProgram(programID);
 
@@ -566,7 +706,7 @@ int main()
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("doomer.DDS");
+    Texture = loadDDS("LoadingScreen.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
     
     unit++;
@@ -596,6 +736,7 @@ int main()
 
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
     GLuint LightID2 = glGetUniformLocation(programID2, "LightPosition_worldspace");
+    GLuint LightID3 = glGetUniformLocation(programID3, "LightPosition_worldspace");
 
     auto t_start = std::chrono::high_resolution_clock::now();
     // the work...
@@ -613,16 +754,16 @@ int main()
         GLuint ViewMatrixID2 = glGetUniformLocation(programID2, "V");
         GLuint ModelMatrixID2 = glGetUniformLocation(programID2, "M");
 
-
-
-
+        GLuint MatrixID3 = glGetUniformLocation(programID3, "MVP");
+        GLuint ViewMatrixID3 = glGetUniformLocation(programID3, "V");
+        GLuint ModelMatrixID3 = glGetUniformLocation(programID3, "M");
     do
     {
         // Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	    glm::mat4 ProjectionMatrix = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         // Camera matrix
         glm::mat4 ViewMatrix       = glm::lookAt(
-                                    glm::vec3 (0,5,10),            // Camera is here
+                                    glm::vec3 (0,5,2),            // Camera is here
                                     glm::vec3 (0,0,0),            // and looks here : at the same position, plus "direction"
                                     glm::vec3 (0,1,0)             // Head is up (set to 0,-1,0 to look upside-down)
                             );
@@ -653,7 +794,7 @@ int main()
             Scene1(deltaTime, window);
         }else if(screen == 1){
             loadScreen(window, 0);
-            Scene2(deltaTime, window);
+            Scene3(deltaTime, window);
         }
 
         glNamedBufferData(VertexArrayID[0], sizeof(g_vertex_buffer_data1), g_vertex_buffer_data1, GL_STATIC_DRAW);        
