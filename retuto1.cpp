@@ -34,10 +34,42 @@ const unsigned long FOURCC_DXT1 = 0x31545844; //(MAKEFOURCC('D','X','T','1'))
 const unsigned long FOURCC_DXT3 = 0x33545844; //(MAKEFOURCC('D','X','T','3'))
 const unsigned long FOURCC_DXT5 = 0x35545844; //(MAKEFOURCC('D','X','T','5'))
 
+
+// Initial cameraPosition : on +Z
+// Initial horizontal angle : toward -Z
+float horizontalAngle = 3.14f;
+// Initial vertical angle : none
+float verticalAngle = 0.0f;
+// Initial Field of View
+float initialFoV = 45.0f;
+GLFWwindow *window;
+float speed = 3.0f; // 3 units / second
+float mouseSpeed = 0.005f;
+
+glm::mat4 ViewMatrix;
+glm::mat4 ProjectionMatrix;
+
+
+glm::mat4 getViewMatrix(){
+    return ViewMatrix;
+}
+glm::mat4 getProjectionMatrix(){
+    return ProjectionMatrix;
+}
+glm::vec3 cameraPosition;
+glm::vec3 Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
+
+
 double timeToShader = 3;
 // This will identify our vertex buffer
 
 int screen = 0;
+
+bool cameraReset = false;
+bool cameraResetComeBack = true;
 
 GLuint vertexbuffer[2];
 GLuint vertexbufferUI[2];
@@ -79,15 +111,6 @@ public:
         for (int i = 0; i < 9; i += 3)
         {
             vec3 auxNormal = normal;
-            if(0==i){
-                auxNormal += vec3(1,0,0)*rot;
-            }
-            if(3==i){
-                auxNormal += vec3(0,1,0)*rot;
-            }
-            if(6==i){
-                auxNormal += vec3(0,0,1)*rot;
-            }
             auxNormal = normalize(auxNormal);
             normals[i] = auxNormal.x;
             normals[i + 1] = auxNormal.y;
@@ -126,7 +149,7 @@ class Muro {
         GLfloat UVBufferDown[6] = { 
             0.0f, 1.0f-0.0f,
             1.0f, 1.0f-1.0f,
-            0.0f, 1.0f-1.0f
+            1.0f, 1.0f-0.0f
         };
         Muro(vec3 upLeft, vec3 upRight, vec3 downLeft, vec3 downRight) {
             up.vertices[0] = downLeft;
@@ -147,7 +170,7 @@ class Muro {
             glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[0]);
             glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferUp), normalBufferUp, GL_STATIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[1]);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferDown), normalBufferDown, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferUp), normalBufferUp, GL_STATIC_DRAW);
 
             glGenBuffers(2, vertexBuffersID);
             glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[0]);
@@ -170,7 +193,7 @@ class Muro {
             glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[0]);
             glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferUp), normalBufferUp, GL_STATIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[1]);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferDown), normalBufferDown, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferUp), normalBufferUp, GL_STATIC_DRAW);
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[0]);
             glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferUp), vertexBufferUp, GL_STATIC_DRAW);
@@ -178,13 +201,7 @@ class Muro {
             glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferDown), vertexBufferDown, GL_STATIC_DRAW);
 
             for(int i=0;i<2;i++){
-                auto g_vertex = vertexBufferUp;
-                auto g_uv = UVBufferUp;
-                if(i==1){
-                    g_vertex = vertexBufferDown;
-                    g_uv = UVBufferDown; 
-                }
-
+                
                 // 1st attribute buffer : vertices
                 glEnableVertexAttribArray(0);
                 glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[i]);
@@ -372,6 +389,96 @@ GLuint loadDDS(const char * imagepath){
 
     return textureID;
 }
+
+void computeMatricesFromInputs(){
+
+
+	// glfwGetTime is called only once, the first time this function is called
+	static double lastTime = glfwGetTime();
+
+	// Compute time difference between current and last frame
+	double currentTime = glfwGetTime();
+	float deltaTime = float(currentTime - lastTime);
+
+	// Get mouse cameraPosition
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+
+	// Reset mouse cameraPosition for next frame
+	glfwSetCursorPos(window, 768/2, 768/2);
+
+	// Compute new orientation
+	horizontalAngle += mouseSpeed * float(768/2 - xpos );
+	verticalAngle   += mouseSpeed * float( 768/2 - ypos );
+
+	// Direction : Spherical coordinates to Cartesian coordinates conversion
+	glm::vec3 direction(
+		cos(verticalAngle) * sin(horizontalAngle), 
+		sin(verticalAngle),
+		cos(verticalAngle) * cos(horizontalAngle)
+	);
+	
+	// Right vector
+	glm::vec3 right = glm::vec3(
+		sin(horizontalAngle - 3.14f/2.0f), 
+		0,
+		cos(horizontalAngle - 3.14f/2.0f)
+	);
+	
+	// Up vector
+	glm::vec3 up = glm::cross( right, direction );
+
+	// Move forward
+	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
+		cameraPosition += direction * deltaTime * speed;
+	}
+	// Move backward
+	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS){
+		cameraPosition -= direction * deltaTime * speed;
+	}
+	// Strafe right
+	if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
+		cameraPosition += right * deltaTime * speed;
+	}
+	// Strafe left
+	if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS){
+		cameraPosition -= right * deltaTime * speed;
+	}
+    
+	float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
+
+	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+	ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+	// Camera matrix
+	ViewMatrix       = glm::lookAt(
+								cameraPosition,           // Camera is here
+								cameraPosition+direction, // and looks here : at the same cameraPosition, plus "direction"
+								up                  // Head is up (set to 0,-1,0 to look upside-down)
+						   );
+
+	// For the next frame, the "last time" will be "now"
+	lastTime = currentTime;
+}
+
+void ControlProcessing()
+{
+
+
+    GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+    GLuint MatrixIDM = glGetUniformLocation(programID, "M");
+    GLuint MatrixIDV = glGetUniformLocation(programID, "V");
+
+    computeMatricesFromInputs();
+    glm::mat4 ProjectionMatrix = getProjectionMatrix();
+    glm::mat4 ViewMatrix = getViewMatrix();
+    glm::mat4 ModelMatrix = glm::mat4(1.0);
+    glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glUniformMatrix4fv(MatrixIDM, 1, GL_FALSE, &ModelMatrix[0][0]);
+    glUniformMatrix4fv(MatrixIDV, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+}
+
 
 
 void Scene1(double deltaTime,GLFWwindow *window)
@@ -631,14 +738,146 @@ void Scene2(double deltaTime, GLFWwindow *window)
 }
 
 void Scene3(double deltaTime,GLFWwindow *window) {
+
+
+    ControlProcessing();
+    
     glUseProgram(programID3);
     static float yDirection = 1;
     static Muro *muro = new Muro(vec3(-1, 1, 0), vec3(1, 1, 0), vec3(-1, -1, 0), vec3(1, -1, 0));
-    static Muro *muro2 = new Muro(vec3(1, 1, 0), vec3(1, 1, -1), vec3(1, -1, 0), vec3(1, -1, -1));
+    static Muro *muro2 = new Muro(vec3(1, 1, 0), vec3(1, 1, -5), vec3(1, -1, 0), vec3(1, -1, -5));
+    static Muro *muro3 = new Muro(/*triangulo izq arriba*/vec3(-1, 1, -5), /*triangulo der arriba*/vec3(-1, 1, 0),/*triangulo izq abajo*/ vec3(-1, -1, -5),/*triangulo der abajo*/ vec3(-1, -1, 0));
+    static Muro *Suelo = new Muro(vec3(-1, -1, -5), vec3(1, -1, -5), vec3(-1, -1, 0), vec3(1, -1, 0));
+    static Muro *Techo = new Muro(vec3(-1, 1, -5), vec3(1, 1, -5), vec3(-1, 1, 0), vec3(1, 1, 0));
+    static Muro *Puerta = new Muro(vec3(1, 1, -5), vec3(-1, 1, -5), vec3(1, -1, -5), vec3(-1, -1, -5));
+    static Muro *Cuadro = new Muro(vec3(0.95, 0.5, -0.5), vec3(0.95, 0.5, -1.5), vec3(0.95, -0.5, -0.5), vec3(0.95, -0.5, -1.5));
+    static Muro *Ventana = new Muro(vec3(-0.95, 0.5, -1.5), vec3(-0.95, 0.5, -3.5), vec3(-0.95, -0.5, -1.5), vec3(-0.95, -0.5, -3.5));
+
     glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),2);
     muro->Draw();
     muro2->Draw();
+    muro3->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),3);
+    Puerta->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),5);
+    Cuadro->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),6);
+    Ventana->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),7);
+    Suelo->Draw();
+    Techo->Draw();
+    //muro->up.Rotate(vec3(0.0,deltaTime,0.0));
+    //muro->down.Rotate(vec3(0.0,deltaTime,0.0));
+
+    if(!cameraReset)
+    {
+        cameraReset = true;
+        cameraPosition = vec3(0,0,0);
+    }
+    if(!cameraResetComeBack)
+    {
+        cameraResetComeBack = true;
+        cameraPosition = vec3(0,0,-4.5);
+    }
+
+    if(cameraPosition.z <= -5)
+    {
+        cameraResetComeBack = false;
+        cameraReset = false;
+        screen = 2;
+    }
+    if(cameraPosition.z > 0)
+    {
+        cameraPosition.z = 0;
+    }
+    if(cameraPosition.x > 1)
+    {
+        cameraPosition.x = 1;
+    }
+    if(cameraPosition.x < -1)
+    {
+        cameraPosition.x = -1;
+    }
+    if(cameraPosition.y > 1)
+    {
+        cameraPosition.y = 1;
+    }
+    if(cameraPosition.y < -1)
+    {
+        cameraPosition.y = -1;
+    }
+    
 }
+
+void Scene4(double deltaTime,GLFWwindow *window) {
+
+    ControlProcessing();
+    
+    glUseProgram(programID3);
+    static float yDirection = 1;
+    static Muro *Puerta = new Muro(vec3(-1, 1, 0), vec3(1, 1, 0), vec3(-1, -1, 0), vec3(1, -1, 0));
+    static Muro *muro = new Muro(vec3(1, 1, 0), vec3(1, 1, -2), vec3(1, -1, 0), vec3(1, -1, -2));
+    static Muro *muro2 = new Muro(/*triangulo izq arriba*/vec3(-1, 1, -2), /*triangulo der arriba*/vec3(-1, 1, 0),/*triangulo izq abajo*/ vec3(-1, -1, -2),/*triangulo der abajo*/ vec3(-1, -1, 0));
+    static Muro *muro3 = new Muro(vec3(1, 1, -2), vec3(-1, 1, -2), vec3(1, -1, -2), vec3(-1, -1, -2));
+    static Muro *Suelo = new Muro(vec3(-1, -1, -2), vec3(1, -1, -2), vec3(-1, -1, 0), vec3(1, -1, 0));
+    static Muro *Techo = new Muro(vec3(-1, 1, -2), vec3(1, 1, -2), vec3(-1, 1, 0), vec3(1, 1, 0));
+    static Muro *Cuadro = new Muro(vec3(0.95, 0.5, -0.5), vec3(0.95, 0.5, -1.5), vec3(0.95, -0.5, -0.5), vec3(0.95, -0.5, -1.5));
+    static Muro *Estanteria = new Muro(vec3(-0.95, 0.5, -0.5), vec3(-0.95, 0.5, -1.5), vec3(-0.95, -1, -0.5), vec3(-0.95, -1, -1.5));
+
+    
+
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),4);
+    muro->Draw();
+    muro2->Draw();
+    muro3->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),3);
+    Puerta->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),7);
+    Suelo->Draw();
+    Techo->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),8);
+    Cuadro->Draw();
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),9);
+    Estanteria->Draw();
+    //muro->up.Rotate(vec3(0.0,deltaTime,0.0));
+    //muro->down.Rotate(vec3(0.0,deltaTime,0.0));
+
+
+    if(!cameraReset)
+    {
+        cameraReset = true;
+        cameraPosition = vec3(0,0,-0.5);
+    }
+    if(cameraPosition.z > 0)
+    {
+        cameraResetComeBack = false;
+        screen = 3;
+    }
+    if(cameraPosition.z < -2)
+    {
+        cameraPosition.z = -2;
+    }
+    if(cameraPosition.x > 1)
+    {
+        cameraPosition.x = 1;
+    }
+    if(cameraPosition.x < -1)
+    {
+        cameraPosition.x = -1;
+    }
+    if(cameraPosition.y > 1)
+    {
+        cameraPosition.y = 1;
+    }
+    if(cameraPosition.y < -1)
+    {
+        cameraPosition.y = -1;
+    }
+
+}
+
+
+
 
 int main()
 {
@@ -655,8 +894,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
     // Open a window and create its OpenGL context
-    GLFWwindow *window; // (In the accompanying source code, this variable is global for simplicity)
-    window = glfwCreateWindow(1024, 1024, "Tutorial 01", NULL, NULL);
+    window = glfwCreateWindow(768, 768, "Tutorial 01", NULL, NULL);
     if (window == NULL)
     {
         fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
@@ -672,6 +910,12 @@ int main()
     }
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Set the mouse at the center of the screen
+    glfwPollEvents();
+    glfwSetCursorPos(window, 768/2, 768/2);
+
 
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
@@ -729,7 +973,42 @@ int main()
     
     unit++;
     glActiveTexture(GL_TEXTURE0 + unit);
-    Texture = loadDDS("uvtemplate.DDS");
+    Texture = loadDDS("Madera.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("Puerta.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("Ladrillo.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("Cuadro.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("Ventana.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("TexturaTablones.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("Cuadro2.DDS");
+    glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
+
+    unit++;
+    glActiveTexture(GL_TEXTURE0 + unit);
+    Texture = loadDDS("Estanteria.DDS");
     glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), unit);
 
     glGenBuffers(2, &uvbuffer);
@@ -776,13 +1055,18 @@ int main()
     GLuint ViewMatrixID3 = glGetUniformLocation(programID3, "V");
     GLuint ModelMatrixID3 = glGetUniformLocation(programID3, "M");
 
+
+
     do
     {
+
+
+        
         // Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	    glm::mat4 ProjectionMatrix = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         // Camera matrix
         glm::mat4 ViewMatrix       = glm::lookAt(
-                                    glm::vec3 (-3,5,10),            // Camera is here
+                                    glm::vec3 (-3,0,-5),            // Camera is here
                                     glm::vec3 (0,0,0),            // and looks here : at the same position, plus "direction"
                                     glm::vec3 (0,1,0)             // Head is up (set to 0,-1,0 to look upside-down)
                             );
@@ -815,6 +1099,27 @@ int main()
             loadScreen(window, 0);
 
             glUseProgram(programID3);
+            glUniform3f(LightID3, 3,2,-3);
+            glUniformMatrix4fv(MatrixID3, 1, GL_FALSE, &MVP[0][0]);
+            glUniformMatrix4fv(ModelMatrixID3, 1, GL_FALSE, &ModelMatrix[0][0]);
+            glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+            Scene3(deltaTime, window);
+        }
+        else if(screen == 2){
+
+            glUseProgram(programID3);
+            glUniform3f(LightID3, 3,2,-3);
+            glUniformMatrix4fv(MatrixID3, 1, GL_FALSE, &MVP[0][0]);
+            glUniformMatrix4fv(ModelMatrixID3, 1, GL_FALSE, &ModelMatrix[0][0]);
+            glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+            Scene4(deltaTime, window);
+        }
+        else if(screen == 3){
+
+            glUseProgram(programID3);
+            glUniform3f(LightID3, 3,2,-3);
             glUniformMatrix4fv(MatrixID3, 1, GL_FALSE, &MVP[0][0]);
             glUniformMatrix4fv(ModelMatrixID3, 1, GL_FALSE, &ModelMatrix[0][0]);
             glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
