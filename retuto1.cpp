@@ -135,7 +135,7 @@ class Muro {
 
             down.vertices[0] = downLeft;
             down.vertices[1] = upRight;
-            down.vertices[3] = downRight;
+            down.vertices[2] = downRight;
 
             glGenBuffers(2, UVBuffersID);
             glBindBuffer(GL_ARRAY_BUFFER, UVBuffersID[0]);
@@ -161,6 +161,22 @@ class Muro {
             // Draw triangle...
             up.PassToBuffer(vertexBufferUp, normalBufferUp);
             down.PassToBuffer(vertexBufferDown, normalBufferDown);
+
+            glBindBuffer(GL_ARRAY_BUFFER, UVBuffersID[0]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(UVBufferUp), UVBufferUp, GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, UVBuffersID[1]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(UVBufferDown), UVBufferDown, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[0]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferUp), normalBufferUp, GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, normalBuffersID[1]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(normalBufferDown), normalBufferDown, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[0]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferUp), vertexBufferUp, GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBuffersID[1]);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferDown), vertexBufferDown, GL_STATIC_DRAW);
+
             for(int i=0;i<2;i++){
                 auto g_vertex = vertexBufferUp;
                 auto g_uv = UVBufferUp;
@@ -618,8 +634,10 @@ void Scene3(double deltaTime,GLFWwindow *window) {
     glUseProgram(programID3);
     static float yDirection = 1;
     static Muro *muro = new Muro(vec3(-1, 1, 0), vec3(1, 1, 0), vec3(-1, -1, 0), vec3(1, -1, 0));
-    glUniform1i(glGetUniformLocation(programUI,"myTextureSampler"),2);
+    static Muro *muro2 = new Muro(vec3(1, 1, 0), vec3(1, 1, -1), vec3(1, -1, 0), vec3(1, -1, -1));
+    glUniform1i(glGetUniformLocation(programID3,"myTextureSampler"),2);
     muro->Draw();
+    muro2->Draw();
 }
 
 int main()
@@ -746,24 +764,25 @@ int main()
     triangle1.pos = vec3(0,0,0);
     triangle2.pos = vec3(.5,0,0);
 
-        GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-        GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
-        GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
+    GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+    GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
+    GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
 
-        GLuint MatrixID2 = glGetUniformLocation(programID2, "MVP");
-        GLuint ViewMatrixID2 = glGetUniformLocation(programID2, "V");
-        GLuint ModelMatrixID2 = glGetUniformLocation(programID2, "M");
+    GLuint MatrixID2 = glGetUniformLocation(programID2, "MVP");
+    GLuint ViewMatrixID2 = glGetUniformLocation(programID2, "V");
+    GLuint ModelMatrixID2 = glGetUniformLocation(programID2, "M");
 
-        GLuint MatrixID3 = glGetUniformLocation(programID3, "MVP");
-        GLuint ViewMatrixID3 = glGetUniformLocation(programID3, "V");
-        GLuint ModelMatrixID3 = glGetUniformLocation(programID3, "M");
+    GLuint MatrixID3 = glGetUniformLocation(programID3, "MVP");
+    GLuint ViewMatrixID3 = glGetUniformLocation(programID3, "V");
+    GLuint ModelMatrixID3 = glGetUniformLocation(programID3, "M");
+
     do
     {
         // Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	    glm::mat4 ProjectionMatrix = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         // Camera matrix
         glm::mat4 ViewMatrix       = glm::lookAt(
-                                    glm::vec3 (0,5,2),            // Camera is here
+                                    glm::vec3 (-3,5,2),            // Camera is here
                                     glm::vec3 (0,0,0),            // and looks here : at the same position, plus "direction"
                                     glm::vec3 (0,1,0)             // Head is up (set to 0,-1,0 to look upside-down)
                             );
@@ -771,11 +790,11 @@ int main()
         glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
         
         //Get a handle for our "MVP" uniform
-        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+        glUniformMatrix4fv(MatrixID3, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID3, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-        glUseProgram(programID);
+        //glUseProgram(programID);
 
         //getsTime Dif
         t_start = t_end;
@@ -794,6 +813,12 @@ int main()
             Scene1(deltaTime, window);
         }else if(screen == 1){
             loadScreen(window, 0);
+
+            glUseProgram(programID3);
+            glUniformMatrix4fv(MatrixID3, 1, GL_FALSE, &MVP[0][0]);
+            glUniformMatrix4fv(ModelMatrixID3, 1, GL_FALSE, &ModelMatrix[0][0]);
+            glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
+
             Scene3(deltaTime, window);
         }
 
