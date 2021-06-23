@@ -684,7 +684,7 @@ int main()
     programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
     programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
-    programUI = LoadShaders("MyVertex3.shader", "MyFragmentBK.shader");
+    programUI = LoadShaders( "MyVertex3.shader", "MyFragmentBK.shader" );
 
     programID3 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
     // Use our shader
@@ -782,7 +782,7 @@ int main()
 	    glm::mat4 ProjectionMatrix = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
         // Camera matrix
         glm::mat4 ViewMatrix       = glm::lookAt(
-                                    glm::vec3 (-3,5,2),            // Camera is here
+                                    glm::vec3 (-3,5,10),            // Camera is here
                                     glm::vec3 (0,0,0),            // and looks here : at the same position, plus "direction"
                                     glm::vec3 (0,1,0)             // Head is up (set to 0,-1,0 to look upside-down)
                             );
