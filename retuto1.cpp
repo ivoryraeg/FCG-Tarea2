@@ -547,17 +547,17 @@ void Scene3(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
     ControlProcessing();
     
     glUseProgram(programID3);
-    static Escena *escena3;
+    static Escena escena3;
     static float yDirection = 1;
-    Muro *Puerta = nullptr;
-    Muro *muro = nullptr;
-    Muro *muro2 = nullptr;
-    Muro *muro3 = nullptr;
-    Muro *Suelo = nullptr;
-    Muro *Techo = nullptr;
-    Muro *Cuadro = nullptr;
-    Muro *Estanteria = nullptr;
-    Muro *ListaMuros[8];
+    static Muro *Puerta = nullptr;
+    static Muro *muro = nullptr;
+    static Muro *muro2 = nullptr;
+    static Muro *muro3 = nullptr;
+    static Muro *Suelo = nullptr;
+    static Muro *Techo = nullptr;
+    static Muro *Cuadro = nullptr;
+    static Muro *Estanteria = nullptr;
+    static Muro *ListaMuros[8];
 
     if(Start){
         float size = 2;
@@ -569,20 +569,20 @@ void Scene3(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
         ListaMuros[5] = Techo = new Muro(vec3(-1, 1, -2)*size, vec3(1, 1, -2)*size, vec3(-1, 1, 1)*size, vec3(1, 1, 1)*size,7);
         ListaMuros[6] = Cuadro = new Muro(vec3(0.95, 0.5, -0.5)*size, vec3(0.95, 0.5, -1.5)*size, vec3(0.95, -0.5, -0.5)*size, vec3(0.95, -0.5, -1.5)*size,8);
         ListaMuros[7] = Estanteria = new Muro(vec3(-0.95, 0.5, -0.5)*size, vec3(-0.95, 0.5, -1.5)*size, vec3(-0.95, -1, -0.5)*size, vec3(-0.95, -1, -1.5)*size,9);
-        cameraPosition = vec3(0,0,0);
-        escena3 = new Escena();
         for(int i=0;i<8;i++){
-            escena3->AddMuro(ListaMuros[i]);
+            escena3.AddMuro(ListaMuros[i]);
         }
         return;
     }
     if(Finish){
-        escena3->UnLoad();
-        free(escena3);
+        escena3.UnLoad();
         return;
     }
-    escena3->Draw(programID3);
 
+    for(int i=0;i<8;i++){
+        //ListaMuros[i]->Draw(programID3);
+        escena3.Draw(programID3);
+    }
     //muro->up.Rotate(vec3(0.0,deltaTime,0.0));
     //muro->down.Rotate(vec3(0.0,deltaTime,0.0));
 
@@ -723,12 +723,9 @@ void loadScreen(GLFWwindow *window, int scene){
             }
             if(scene == 1){
                 Scene3(0,window,true, false);
-                
             }
             if(scene == 2){
-                Scene3(0,window,false, true);       
-                //Debiera cargar la escena 4
-                //Scene4(0,window, true, false)
+                Scene3(0,window,false, true);
             }
             std::cout << "Adios" << std::endl;  
         }
@@ -962,7 +959,7 @@ int main()
             glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
 
             Scene3(deltaTime, window, false, false);
-            //loadScreen(window, 2);
+            loadScreen(window, 2);
         }
         else if(screen == 2){
 

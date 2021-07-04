@@ -48,5 +48,5 @@ void Escena::UnLoad(){
         free(currentNode);
         currentNode = aux;
     }
-    muroList.head = nullptr;
+
 }
