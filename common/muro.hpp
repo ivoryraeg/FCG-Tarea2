@@ -1,12 +1,11 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-// Include GLEW. Always include it before gl.h and glfw3.h, since it's a bit magic.
-#include <GL/glew.h>
-#include <GL/gl.h>
+//#include <GL/glew.h>
+//#include <GL/gl.h>
 
 // Include GLFW
-#include <GLFW/glfw3.h>
+//#include <GLFW/glfw3.h>
 
 #ifndef MURO_H
 #define MURO_H

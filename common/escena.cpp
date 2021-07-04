@@ -31,16 +31,24 @@ void Escena::AddMuro(Muro *muro){
         muroList.AddMuro(muro);
     }
 }
-void Escena::Draw(GLuint programID){
+
+void Escena::AddPuerta(Puerta *puerta){
+    this->puerta = puerta;
+}
+
+void Escena::Draw(GLuint programID,GLFWwindow *window){
     MuroNode *currentNode = muroList.head;
     while(currentNode!=nullptr){
         currentNode->muro->Draw(programID);
         currentNode = currentNode->sig;
     }
+    puerta->Draw(programID,window);
 }
 void Escena::UnLoad(){
     MuroNode *currentNode = muroList.head;
     MuroNode *aux;
+    puerta->Destroy();
+    free(puerta);
     while(currentNode != nullptr){
         aux = currentNode->sig;
         currentNode->muro->Destroy();
@@ -48,5 +56,6 @@ void Escena::UnLoad(){
         free(currentNode);
         currentNode = aux;
     }
+    muroList.head = nullptr;
 
 }
