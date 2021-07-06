@@ -53,8 +53,9 @@ GLuint vertexbufferUI[2];
 GLuint uvbufferUI[2];
 GLuint programID;
 GLuint programID2;
-GLuint programUI;
 GLuint programID3;
+GLuint programID4;
+GLuint programUI;
 GLuint uvbuffer;
 GLuint Texture;
 GLuint normalbuffer[2];
@@ -601,47 +602,74 @@ void Scene3(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
     
 }
 
-void Scene4(double deltaTime,GLFWwindow *window) {
+void Scene4(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
 
+  
     ControlProcessing();
     
-    glUseProgram(programID3);
+    glUseProgram(programID4);
+    static Escena escena4;
     static float yDirection = 1;
-    static Muro *Puerta = new Muro(vec3(-1, 1, 0), vec3(1, 1, 0), vec3(-1, -1, 0), vec3(1, -1, 0),3);
-    static Muro *muro = new Muro(vec3(1, 1, 0), vec3(1, 1, -2), vec3(1, -1, 0), vec3(1, -1, -2),4);
-    static Muro *muro2 = new Muro(/*triangulo izq arriba*/vec3(-1, 1, -2), /*triangulo der arriba*/vec3(-1, 1, 0),/*triangulo izq abajo*/ vec3(-1, -1, -2),/*triangulo der abajo*/ vec3(-1, -1, 0),4);
-    static Muro *muro3 = new Muro(vec3(1, 1, -2), vec3(-1, 1, -2), vec3(1, -1, -2), vec3(-1, -1, -2),4);
-    static Muro *Suelo = new Muro(vec3(-1, -1, -2), vec3(1, -1, -2), vec3(-1, -1, 0), vec3(1, -1, 0),7);
-    static Muro *Techo = new Muro(vec3(-1, 1, -2), vec3(1, 1, -2), vec3(-1, 1, 0), vec3(1, 1, 0),7);
-    static Muro *Cuadro = new Muro(vec3(0.95, 0.5, -0.5), vec3(0.95, 0.5, -1.5), vec3(0.95, -0.5, -0.5), vec3(0.95, -0.5, -1.5),8);
-    static Muro *Estanteria = new Muro(vec3(-0.95, 0.5, -0.5), vec3(-0.95, 0.5, -1.5), vec3(-0.95, -1, -0.5), vec3(-0.95, -1, -1.5),9);
+    static Puerta *puerta = nullptr;
+    static Muro *muro = nullptr;
+    static Muro *muro2 = nullptr;
+    static Muro *muro3 = nullptr;
+    static Muro *muro4 = nullptr;
+    static Muro *muro5 = nullptr;
+    static Muro *Suelo = nullptr;
+    static Muro *Techo = nullptr;
+    static Muro *Cuadro = nullptr;
+    static Muro *Estanteria = nullptr;
+    static Muro *ListaMuros[10];
 
-    
-    muro->Draw(programID3);
-    muro2->Draw(programID3);
-    muro3->Draw(programID3);
-    Puerta->Draw(programID3);    
-    Suelo->Draw(programID3);
-    Techo->Draw(programID3);    
-    Cuadro->Draw(programID3);    
-    Estanteria->Draw(programID3);
+    if(Start){
+        float size = 2;
+        cameraPosition = vec3(0,0,-3);
+        puerta = new Puerta(1,vec3(-size, size, 1), vec3(size, size, 1), vec3(-size, -size, 1), vec3(size, -size, 1),3);
+        ListaMuros[1] = muro = new Muro(vec3(size, size, 1), vec3(size, size, -size*2), vec3(size, -size, 1), vec3(size, -size, -size*2),4);
+        ListaMuros[2] = muro2 = new Muro(/*triangulo izq arriba*/vec3(-size, size, -2*size), /*triangulo der arriba*/vec3(-size,size, 1),/*triangulo izq abajo*/ vec3(-size, -size, -2*size),/*triangulo der abajo*/ vec3(-1, -1, 0.5)*size,4);
+        ListaMuros[3] = muro3 = new Muro(vec3(1, 1, -2)*size, vec3(-1, 1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, -2)*size,4);
+        ListaMuros[4] = muro4 = new Muro(vec3(1, 1, -2)*size, vec3(-1, 1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, -2)*size,4);
+        ListaMuros[5] = muro5 = new Muro(vec3(1, 1, -2)*size, vec3(-1, 1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, -2)*size,4);
+        ListaMuros[6] = Suelo = new Muro(vec3(-1, -1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, 1)*size, vec3(1, -1, 1)*size,7);
+        ListaMuros[7] = Techo = new Muro(vec3(-1, 1, -2)*size, vec3(1, 1, -2)*size, vec3(-1, 1, 1)*size, vec3(1, 1, 1)*size,7);
+        ListaMuros[8] = Cuadro = new Muro(vec3(0.95, 0.5, -0.5)*size, vec3(0.95, 0.5, -1.5)*size, vec3(0.95, -0.5, -0.5)*size, vec3(0.95, -0.5, -1.5)*size,8);
+        ListaMuros[0] = Estanteria = new Muro(vec3(-0.95, 0.5, -0.5)*size, vec3(-0.95, 0.5, -1.5)*size, vec3(-0.95, -1, -0.5)*size, vec3(-0.95, -1, -1.5)*size,9);
+        escena4.AddPuerta(puerta);
+        for(int i=0;i<7;i++){
+            escena4.AddMuro(ListaMuros[i]);
+        }
+        return;
+    }
+    if(Finish){
+        escena4.UnLoad();
+        return;
+    }
+
+    escena4.Draw(programID4,window);
     //muro->up.Rotate(vec3(0.0,deltaTime,0.0));
     //muro->down.Rotate(vec3(0.0,deltaTime,0.0));
-
 
     if(!cameraReset)
     {
         cameraReset = true;
-        cameraPosition = vec3(0,0,-0.5);
+        cameraPosition = vec3(0,0,-3);
+    }
+    if(!cameraResetComeBack)
+    {
+        cameraResetComeBack = true;
+        cameraPosition = vec3(0,0,-4.5);
+    }
+
+    if(cameraPosition.z <= -5)
+    {
+        //cameraResetComeBack = false;
+        //cameraReset = false;
+        //(window, 2);
     }
     if(cameraPosition.z > 0)
     {
-        cameraResetComeBack = false;
-        screen = 3;
-    }
-    if(cameraPosition.z < -2)
-    {
-        cameraPosition.z = -2;
+        cameraPosition.z = 0;
     }
     if(cameraPosition.x > 1)
     {
@@ -659,6 +687,7 @@ void Scene4(double deltaTime,GLFWwindow *window) {
     {
         cameraPosition.y = -1;
     }
+    
 
 }
 
@@ -718,7 +747,6 @@ void loadScreen(GLFWwindow *window, int scene){
 
     float cont = 2;
 
-    std::cout << "Hola" << std::endl;
     while(cont > 0){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -740,11 +768,13 @@ void loadScreen(GLFWwindow *window, int scene){
     }
     if(scene == 1){
         Scene3(0,window,true, false);
+        Scene4(0,window,false, true);
     }
     if(scene == 2){
         Scene3(0,window,false, true);
+        Scene4(0,window,true, false);
     }
-    std::cout << "Adios" << std::endl;
+
 }
 
 
@@ -794,12 +824,16 @@ int main()
     glDepthFunc(GL_LESS);
 
     // Create and compile our GLSL program from the shaders
-    programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
-    programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
-
     programUI = LoadShaders( "MyVertex3.shader", "MyFragmentBK.shader" );
 
+    programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+    
+    programID2 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+
     programID3 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+
+    programID4 = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+
     // Use our shader
     glUseProgram(programID);
 
@@ -903,6 +937,8 @@ int main()
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
     GLuint LightID2 = glGetUniformLocation(programID2, "LightPosition_worldspace");
     GLuint LightID3 = glGetUniformLocation(programID3, "LightPosition_worldspace");
+    GLuint LightID4 = glGetUniformLocation(programID4, "LightPosition_worldspace");
+
 
     auto t_start = std::chrono::high_resolution_clock::now();
     // the work...
@@ -924,7 +960,9 @@ int main()
     GLuint ViewMatrixID3 = glGetUniformLocation(programID3, "V");
     GLuint ModelMatrixID3 = glGetUniformLocation(programID3, "M");
 
-
+    GLuint MatrixID4 = glGetUniformLocation(programID4, "MVP");
+    GLuint ViewMatrixID4 = glGetUniformLocation(programID4, "V");
+    GLuint ModelMatrixID4 = glGetUniformLocation(programID4, "M");
 
     do
     {
@@ -977,13 +1015,13 @@ int main()
         }
         else if(screen == 2){
 
-            glUseProgram(programID3);
-            glUniform3f(LightID3, 0,1,1);
-            glUniformMatrix4fv(MatrixID3, 1, GL_FALSE, &MVP[0][0]);
-            glUniformMatrix4fv(ModelMatrixID3, 1, GL_FALSE, &ModelMatrix[0][0]);
-            glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
+            glUseProgram(programID4);
+            glUniform3f(LightID4, 0,1,1);
+            glUniformMatrix4fv(MatrixID4, 1, GL_FALSE, &MVP[0][0]);
+            glUniformMatrix4fv(ModelMatrixID4, 1, GL_FALSE, &ModelMatrix[0][0]);
+            glUniformMatrix4fv(ViewMatrixID4, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-            Scene4(deltaTime, window);
+            Scene4(deltaTime, window, false, false);
             //loadScreen(window, 0);
         }
         else if(screen == 3){
