@@ -543,7 +543,7 @@ void Scene3(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
         ListaMuros[1] = muro = new Muro(vec3(size, size, 1), vec3(size, size, -size*2), vec3(size, -size, 1), vec3(size, -size, -size*2),4);
         ListaMuros[2] = muro2 = new Muro(/*triangulo izq arriba*/vec3(-size, size, -2*size), /*triangulo der arriba*/vec3(-size,size, 1),/*triangulo izq abajo*/ vec3(-size, -size, -2*size),/*triangulo der abajo*/ vec3(-1, -1, 0.5)*size,4);
         ListaMuros[3] = muro3 = new Muro(vec3(1, 1, -2)*size, vec3(-1, 1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, -2)*size,4);
-        ListaMuros[4] = Suelo = new Muro(vec3(-1, -1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, 1)*size, vec3(1, -1, 1)*size,7);
+        ListaMuros[4] = Suelo = new Muro(vec3(-1, -1, 1)*size, vec3(1, -1, 1)*size, vec3(-1, -1, -2)*size, vec3(1, -1, -2)*size,7);
         ListaMuros[5] = Techo = new Muro(vec3(-1, 1, -2)*size, vec3(1, 1, -2)*size, vec3(-1, 1, 1)*size, vec3(1, 1, 1)*size,7);
         ListaMuros[6] = Cuadro = new Muro(vec3(0.95, 0.5, -0.5)*size, vec3(0.95, 0.5, -1.5)*size, vec3(0.95, -0.5, -0.5)*size, vec3(0.95, -0.5, -1.5)*size,8);
         ListaMuros[0] = Estanteria = new Muro(vec3(-0.95, 0.5, -0.5)*size, vec3(-0.95, 0.5, -1.5)*size, vec3(-0.95, -1, -0.5)*size, vec3(-0.95, -1, -1.5)*size,9);
@@ -559,45 +559,31 @@ void Scene3(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
     }
 
     escena3.Draw(programID3,window);
-    //muro->up.Rotate(vec3(0.0,deltaTime,0.0));
-    //muro->down.Rotate(vec3(0.0,deltaTime,0.0));
 
-    if(!cameraReset)
+    
+    if(cameraPosition.z > 0.5)
     {
-        cameraReset = true;
-        cameraPosition = vec3(0,0,-3);
+        cameraPosition.z = 0.5;
     }
-    if(!cameraResetComeBack)
+    if(cameraPosition.z < -3.5)
     {
-        cameraResetComeBack = true;
-        cameraPosition = vec3(0,0,-4.5);
+        cameraPosition.z = -3.5;
     }
-
-    if(cameraPosition.z <= -5)
+    if(cameraPosition.x > 0.8)
     {
-        //cameraResetComeBack = false;
-        //cameraReset = false;
-        //(window, 2);
+        cameraPosition.x = 0.8;
     }
-    if(cameraPosition.z > 0)
+    if(cameraPosition.x < -0.8)
     {
-        cameraPosition.z = 0;
+        cameraPosition.x = -0.8;
     }
-    if(cameraPosition.x > 1)
+    if(cameraPosition.y > 0.5)
     {
-        cameraPosition.x = 1;
+        cameraPosition.y = 0.5;
     }
-    if(cameraPosition.x < -1)
+    if(cameraPosition.y < -0.5)
     {
-        cameraPosition.x = -1;
-    }
-    if(cameraPosition.y > 1)
-    {
-        cameraPosition.y = 1;
-    }
-    if(cameraPosition.y < -1)
-    {
-        cameraPosition.y = -1;
+        cameraPosition.y = -0.5;
     }
     
 }
@@ -611,32 +597,38 @@ void Scene4(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
     static Escena escena4;
     static float yDirection = 1;
     static Puerta *puerta = nullptr;
-    static Muro *muro = nullptr;
-    static Muro *muro2 = nullptr;
-    static Muro *muro3 = nullptr;
-    static Muro *muro4 = nullptr;
-    static Muro *muro5 = nullptr;
+    static Muro *muroFR = nullptr;
+    static Muro *muroFL = nullptr;
+    static Muro *muroR = nullptr;
+    static Muro *muroL = nullptr;
+    static Muro *muroB = nullptr;
+    static Muro *muroBR = nullptr;
+    static Muro *muroBL = nullptr;
     static Muro *Suelo = nullptr;
     static Muro *Techo = nullptr;
     static Muro *Cuadro = nullptr;
     static Muro *Estanteria = nullptr;
-    static Muro *ListaMuros[10];
+    static Muro *ListaMuros[11];
 
     if(Start){
-        float size = 2;
         cameraPosition = vec3(0,0,-3);
-        puerta = new Puerta(1,vec3(-size, size, 1), vec3(size, size, 1), vec3(-size, -size, 1), vec3(size, -size, 1),3);
-        ListaMuros[1] = muro = new Muro(vec3(size, size, 1), vec3(size, size, -size*2), vec3(size, -size, 1), vec3(size, -size, -size*2),4);
-        ListaMuros[2] = muro2 = new Muro(/*triangulo izq arriba*/vec3(-size, size, -2*size), /*triangulo der arriba*/vec3(-size,size, 1),/*triangulo izq abajo*/ vec3(-size, -size, -2*size),/*triangulo der abajo*/ vec3(-1, -1, 0.5)*size,4);
-        ListaMuros[3] = muro3 = new Muro(vec3(1, 1, -2)*size, vec3(-1, 1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, -2)*size,4);
-        ListaMuros[4] = muro4 = new Muro(vec3(1, 1, -2)*size, vec3(-1, 1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, -2)*size,4);
-        ListaMuros[5] = muro5 = new Muro(vec3(1, 1, -2)*size, vec3(-1, 1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, -2)*size,4);
-        ListaMuros[6] = Suelo = new Muro(vec3(-1, -1, -2)*size, vec3(1, -1, -2)*size, vec3(-1, -1, 1)*size, vec3(1, -1, 1)*size,7);
-        ListaMuros[7] = Techo = new Muro(vec3(-1, 1, -2)*size, vec3(1, 1, -2)*size, vec3(-1, 1, 1)*size, vec3(1, 1, 1)*size,7);
-        ListaMuros[8] = Cuadro = new Muro(vec3(0.95, 0.5, -0.5)*size, vec3(0.95, 0.5, -1.5)*size, vec3(0.95, -0.5, -0.5)*size, vec3(0.95, -0.5, -1.5)*size,8);
-        ListaMuros[0] = Estanteria = new Muro(vec3(-0.95, 0.5, -0.5)*size, vec3(-0.95, 0.5, -1.5)*size, vec3(-0.95, -1, -0.5)*size, vec3(-0.95, -1, -1.5)*size,9);
+        puerta = new Puerta(1,vec3(-2, 2, 0), vec3(2, 2, 0), vec3(-2, -2, 0), vec3(2, -2, 0),3);
+        puerta->miGrafica->up.pos = vec3(0, 0, 5);
+        puerta->miGrafica->down.pos = vec3(0, 0, 5);
+
+        ListaMuros[0] = muroFR = new Muro(vec3(6, 2, 5), vec3(2, 2, 5), vec3(6, -2, 5), vec3(2, -2, 5), 4);
+        ListaMuros[1] = muroFL = new Muro(vec3(-2, 2, 5), vec3(-6, 2, 5), vec3(-2, -2, 5), vec3(-6, -2, 5), 4);
+        ListaMuros[2] = muroR = new Muro(vec3(6, 2, 5), vec3(6, 2, -4), vec3(6, -2, 5), vec3(6, -2, -4), 4);
+        ListaMuros[3] = muroL = new Muro(/*triangulo izq arriba*/vec3(-6, 2, -4), /*triangulo der arriba*/vec3(-6,2, 5),/*triangulo izq abajo*/ vec3(-6, -2, -4),/*triangulo der abajo*/ vec3(-6, -2, 5),4);
+        ListaMuros[4] = muroB = new Muro(vec3(2, 2, -4), vec3(-2, 2, -4), vec3(2, -2, -4), vec3(-2, -2, -4), 4);
+        ListaMuros[5] = muroBR = new Muro(vec3(6, 2, -4), vec3(2, 2, -4), vec3(6, -2, -4), vec3(2, -2, -4), 4);
+        ListaMuros[6] = muroBL = new Muro(vec3(-2, 2, -4), vec3(-6, 2, -4), vec3(-2, -2, -4), vec3(-6, -2, -4), 4);
+        ListaMuros[7] = Suelo = new Muro(vec3(-6, -2, 5), vec3(6, -2, 5), vec3(-6, -2, -4), vec3(6, -2, -4), 7);
+        ListaMuros[8] = Techo = new Muro(vec3(-6, 2, -4), vec3(6, 2, -4), vec3(-6, 2, 5), vec3(6, 2, 5), 7);
+        ListaMuros[9] = Cuadro = new Muro(vec3(5.9, 1, -1), vec3(5.9, 1, -3), vec3(5.9, -1, -1), vec3(5.9, -1, -3),8);
+        ListaMuros[10] = Estanteria = new Muro(vec3(-5.9, 1, -1), vec3(-5.9, 1, -3), vec3(-5.9, -2, -1), vec3(-5.9, -2, -3),9);
         escena4.AddPuerta(puerta);
-        for(int i=0;i<7;i++){
+        for(int i=0;i<11;i++){
             escena4.AddMuro(ListaMuros[i]);
         }
         return;
@@ -647,45 +639,31 @@ void Scene4(double deltaTime,GLFWwindow *window, bool Start, bool Finish) {
     }
 
     escena4.Draw(programID4,window);
-    //muro->up.Rotate(vec3(0.0,deltaTime,0.0));
-    //muro->down.Rotate(vec3(0.0,deltaTime,0.0));
 
-    if(!cameraReset)
+    
+    if(cameraPosition.z > 4.5)
     {
-        cameraReset = true;
-        cameraPosition = vec3(0,0,-3);
+        cameraPosition.z = 4.5;
     }
-    if(!cameraResetComeBack)
+    if(cameraPosition.z <  -3.5)
     {
-        cameraResetComeBack = true;
-        cameraPosition = vec3(0,0,-4.5);
+        cameraPosition.z = -3.5;
     }
-
-    if(cameraPosition.z <= -5)
+    if(cameraPosition.x > 5.5)
     {
-        //cameraResetComeBack = false;
-        //cameraReset = false;
-        //(window, 2);
+        cameraPosition.x = 5.5;
     }
-    if(cameraPosition.z > 0)
+    if(cameraPosition.x < -5.5)
     {
-        cameraPosition.z = 0;
+        cameraPosition.x = -5.5;
     }
-    if(cameraPosition.x > 1)
+    if(cameraPosition.y > 0.5)
     {
-        cameraPosition.x = 1;
+        cameraPosition.y = 0.5;
     }
-    if(cameraPosition.x < -1)
+    if(cameraPosition.y < -0.5)
     {
-        cameraPosition.x = -1;
-    }
-    if(cameraPosition.y > 1)
-    {
-        cameraPosition.y = 1;
-    }
-    if(cameraPosition.y < -1)
-    {
-        cameraPosition.y = -1;
+        cameraPosition.y = -0.5;
     }
     
 
@@ -767,8 +745,8 @@ void loadScreen(GLFWwindow *window, int scene){
         glfwPollEvents();
     }
     if(scene == 1){
-        Scene3(0,window,true, false);
         Scene4(0,window,false, true);
+        Scene3(0,window,true, false);
     }
     if(scene == 2){
         Scene3(0,window,false, true);
@@ -1016,7 +994,8 @@ int main()
         else if(screen == 2){
 
             glUseProgram(programID4);
-            glUniform3f(LightID4, 0,1,1);
+            glUniform3f(LightID3, 0,0,1);
+            //glUniform3f(LightID4, -,0,1);
             glUniformMatrix4fv(MatrixID4, 1, GL_FALSE, &MVP[0][0]);
             glUniformMatrix4fv(ModelMatrixID4, 1, GL_FALSE, &ModelMatrix[0][0]);
             glUniformMatrix4fv(ViewMatrixID4, 1, GL_FALSE, &ViewMatrix[0][0]);
@@ -1027,7 +1006,7 @@ int main()
         else if(screen == 3){
 
             glUseProgram(programID3);
-            glUniform3f(LightID3, 3,2,-3);
+            glUniform3f(LightID4, 0,1,1);
             glUniformMatrix4fv(MatrixID3, 1, GL_FALSE, &MVP[0][0]);
             glUniformMatrix4fv(ModelMatrixID3, 1, GL_FALSE, &ModelMatrix[0][0]);
             glUniformMatrix4fv(ViewMatrixID3, 1, GL_FALSE, &ViewMatrix[0][0]);
